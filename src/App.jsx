@@ -5,10 +5,10 @@ import { About } from "@/sections/about";
 import { Projects } from "@/sections/projects"; 
 import { Education } from "@/sections/education"; 
 import { Contact } from "@/sections/contact"; 
-
+import { Footer } from "@/lay/footer";
 const App = () => {
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-x-hidden">
       <Navbar />
       <main>
         <Hero />
@@ -17,6 +17,7 @@ const App = () => {
         <Education />
         <Contact />
       </main>
+       <Footer />
     </div>
   );
 };
