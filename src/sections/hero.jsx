@@ -78,9 +78,9 @@ export const Hero = () => {
             <div className="flex items-center gap-4 animate-fade-in animation-delay-400">
               <span className="text-sm text-muted-foreground">Follow me: </span>
               {[
-                { icon: Github, href: "#" },
-                { icon: Linkedin, href: "#" },
-                { icon: Instagram, href: "#" },
+                { icon: Github, href: "https://github.com/muhammadanas20" },
+                { icon: Linkedin, href: "https://www.linkedin.com/in/muhammadanas20/" },
+                { icon: Instagram, href: "https://www.instagram.com/anastrix.20/?hl=en" },
               ].map((social, idx) => (
                 <a
                   key={idx}

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 const navLinks = [
   { href: "#about", label: "About" },
   { href: "#projects", label: "Projects" },
-  { href: "#experience", label: "Education" },
+  { href: "#education", label: "Education" },
 ];
 
 export const Navbar = () => {
@@ -36,7 +36,7 @@ export const Navbar = () => {
           href="#"
           className="text-xl font-bold tracking-tight hover:text-primary"
         >
-          ANAS<span>.</span>
+          ANAS<span className="text-primary">.</span>
         </a>
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-1">
@@ -53,7 +53,7 @@ export const Navbar = () => {
           </div>
         </div>
         <div className="hidden md:block">
-          <Button size="sm">Contact Me</Button>
+          <Button size="sm"><a href="#contact">Contact Me</a></Button>
         </div>
         {/* Mobile Menu Button */}
         <button
