@@ -2,15 +2,6 @@ import { Type } from "lucide-react";
 
 const education = [
   {
-    period: "2023 — 2025",
-    Degree: "Pre-Engineering",
-    college:"Bahria college karsaz",
-    description:
-      "Built a solid academic foundation in mathematics and logic, graduating with a focus on analytical problem-solving",
-    technologies: ["Calculus", "Analytical Logic", "Physics."],
-    current: false,
-  },
-  {
     period: "2025 — Present",
     Degree: "BS Computer science",
     college: "FAST NUCES",
@@ -18,6 +9,15 @@ const education = [
       "Undergraduate Computer Science student deeply involved in full-stack development and competitive programming. Learning to build scalable software in a highly competitive academic environment.",
     technologies: ["HTML", "CSS", "JS","C","C++","OOP","SQL","Latex"],
     current: true,
+  },
+  {
+    period: "2023 — 2025",
+    Degree: "Pre-Engineering",
+    college:"Bahria college karsaz",
+    description:
+      "Built a solid academic foundation in mathematics and logic, graduating with a focus on analytical problem-solving",
+    technologies: ["Calculus", "Analytical Logic", "Physics."],
+    current: false,
   },
 ];
 export const Education = () => {

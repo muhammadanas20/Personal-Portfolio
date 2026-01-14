@@ -27,7 +27,7 @@ export const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 py-5 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 py-0 transition-all duration-300 ${
         isScrolled ? "glass backdrop-blur-md" : "bg-transparent"
       }`}
     >
@@ -77,10 +77,11 @@ export const Navbar = () => {
                 {link.label}
               </a>
             ))}
-            <Button size="sm">Contact Me</Button>
+            <Button size="sm"><a href="#contact">Contact Me</a></Button>
           </div>
         </div>
       )}
+      <div class="h-[2px] w-full bg-gradient-to-r from-transparent via-purple-500 to-transparent shadow-[0_0_20px_#a855f7]"></div>
     </header>
   );
 };
