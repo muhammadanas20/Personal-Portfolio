@@ -77,7 +77,7 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-4 animate-fade-in animation-delay-300">
               <Button
                 size="lg"
-                href="/cv.pdf"
+                href="/cv.png"
                 download
                 target="_blank"
                 rel="noreferrer"
