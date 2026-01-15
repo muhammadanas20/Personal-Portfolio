@@ -1,16 +1,71 @@
-# React + Vite
+# Personal Portfolio - Muhammad Anas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, responsive, and interactive personal portfolio website built to showcase skills, projects, and education. This application features a glassmorphism UI design, smooth animations, and a fully functional contact form.
 
-Currently, two official plugins are available:
+## Project Structure
+```bash src/
+├── assets/         # Static assets (images, svgs)
+├── components/     # Reusable UI components (e.g., Button)
+├── lay/            # Layout components (Navbar, Footer)
+├── sections/       # Page sections (Hero, About, Projects, Education, Contact)
+├── App.jsx         # Main application component
+├── main.jsx        # Entry point
+└── index.css       # Global styles and Tailwind configuration
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+* **Modern UI/UX:** Clean design utilizing glassmorphism effects, glowing elements, and responsive layouts.
+* **Interactive Sections:**
+    * **Hero:** Dynamic introduction with floating animations and social links.
+    * **About:** Personal introduction and professional highlights.
+    * **Projects:** Showcase of recent work with GitHub and live demo links.
+    * **Education:** Timeline view of academic history.
+    * **Contact:** Functional contact form integrated with EmailJS.
+* **Responsive Design:** Fully optimized for desktop, tablet, and mobile devices.
+* **Animations:** Smooth fade-ins, scrolling transitions, and hover effects using CSS animations.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+* **Frontend Framework:** [React.js](https://react.dev/)
+* **Build Tool:** [Vite](https://vitejs.dev/)
+* **Styling:** [Tailwind CSS](https://tailwindcss.com/) (v4)
+* **Icons:** [Lucide React](https://lucide.dev/)
+* **Email Service:** [EmailJS](https://www.emailjs.com/)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## ⚙️ Installation & Setup
+
+Follow these steps to run the project locally.
+
+### 1. Clone the repository
+
+```bash
+git clone [https://github.com/muhammadanas20/personal-portfolio.git](https://github.com/muhammadanas20/personal-portfolio.git)
+cd personal-portfolio
+ ```
+### 2. Install dependencies
+```Bash
+
+npm install
+```
+### 3. Configure Environment Variables
+To make the contact form work, you need to set up EmailJS. Create a .env file in the root directory and add your EmailJS credentials:
+
+Code snippet
+```
+VITE_EMAILJS_SERVICE_ID=your_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_public_key
+```
+### 4. Run the development server
+
+
+```npm run dev```
+The application will typically start at http://localhost:5173.
+
+### 5. Build for production
+To create a production-ready build:
+
+
+
+```npm run build```
