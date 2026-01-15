@@ -175,7 +175,7 @@ export const Contact = () => {
               </div>
 
               <Button
-                className="w-full"
+                className="w-full flex items-center justify-center"
                 type="submit"
                 size="lg"
                 disabled={isLoading}
