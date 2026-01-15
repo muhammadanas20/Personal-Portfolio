@@ -7,6 +7,7 @@ export const Button = ({
     target,
     rel,
     type = "button",
+    onClick,
 }) => {
     const baseClasses =
         "relative inline-flex overflow-hidden rounded-full font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 transition-colors";
@@ -28,6 +29,7 @@ export const Button = ({
             target={target}
             rel={rel || (target === "_blank" ? "noreferrer" : undefined)}
             type={href ? undefined : type}
+            onClick={onClick}
         >
             <span className="relative flex items-center justify-center gap-2">{children}</span>
         </Component>

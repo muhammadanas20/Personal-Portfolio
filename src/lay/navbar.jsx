@@ -70,6 +70,7 @@ export const Navbar = () => {
           <div className="container mx-auto px-6 py-4 flex flex-col gap-4">
             {navLinks.map((link, index) => (
               <a
+                 onClick={() => setIsMobileMenuOpen(false)}
                 href={link.href}
                 key={index}
                 className="p-2 text-lg text-muted-foreground hover:text-foreground hover:bg-surface rounded"
@@ -77,7 +78,7 @@ export const Navbar = () => {
                 {link.label}
               </a>
             ))}
-            <Button size="sm"><a href="#contact">Contact Me</a></Button>
+            <Button className="flex items-center justify-center" size="sm" onClick={() => setIsMobileMenuOpen(false)} href="#contact">Contact Me</Button>
           </div>
         </div>
       )}

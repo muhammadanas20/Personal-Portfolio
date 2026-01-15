@@ -112,13 +112,13 @@ export const Contact = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 max-w-5xl mx-auto items-start">
-          <div className="glass p-6 sm:p-7 md:p-8 rounded-3xl border border-primary/30 animate-fade-in animation-delay-300">
-            <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 lg:gap-12 max-w-5xl mx-auto items-start">
+          <div className="glass p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-primary/30 animate-fade-in animation-delay-300">
+            <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium mb-2"
+                  className="block text-xs sm:text-sm font-medium mb-2"
                 >
                   Name
                 </label>
@@ -131,14 +131,14 @@ export const Contact = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm md:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm sm:text-base"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium mb-2"
+                  className="block text-xs sm:text-sm font-medium mb-2"
                 >
                   Email
                 </label>
@@ -151,26 +151,26 @@ export const Contact = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm md:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm sm:text-base"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium mb-2"
+                  className="block text-xs sm:text-sm font-medium mb-2"
                 >
                   Message
                 </label>
                 <textarea
-                  rows={5}
+                  rows={4}
                   required
                   value={formData.message}
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
                   placeholder="Your message..."
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm md:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm sm:text-base"
                 />
               </div>
 
@@ -211,26 +211,28 @@ export const Contact = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-6 animate-fade-in animation-delay-400">
-            <div className="glass rounded-3xl p-6 sm:p-7 md:p-8">
-              <h3 className="text-xl font-semibold mb-6">
+          <div className="space-y-5 sm:space-y-6 animate-fade-in animation-delay-400">
+            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
                 Contact Information
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {contactInfo.map((item, i) => (
                   <a
                     key={i}
                     href={item.href}
-                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-surface transition-colors group"
+                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl hover:bg-surface transition-colors group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <item.icon className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         {item.label}
                       </div>
-                      <div className="font-medium">{item.value}</div>
+                      <div className="font-medium text-sm sm:text-base truncate">
+                        {item.value}
+                      </div>
                     </div>
                   </a>
                 ))}
@@ -238,12 +240,12 @@ export const Contact = () => {
             </div>
 
             {/* Availability Card */}
-            <div className="glass rounded-3xl p-6 sm:p-7 md:p-8 border border-primary/30">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium">Open to Opportunities</span>
+            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-primary/30">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="font-medium text-sm sm:text-base">Open to Opportunities</span>
               </div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
                 I'm currently looking for internships and part-time roles where I can apply my skills in React and C. If you're looking for a motivated developer who is eager to learn and build impactful software, let's connect!
               </p>
             </div>
