@@ -13,7 +13,7 @@ A modern, responsive, and interactive personal portfolio website built to showca
 └── index.css       # Global styles and Tailwind configuration
 ```
 
-## 🚀 Features
+## Features
 
 * **Modern UI/UX:** Clean design utilizing glassmorphism effects, glowing elements, and responsive layouts.
 * **Interactive Sections:**
@@ -25,7 +25,7 @@ A modern, responsive, and interactive personal portfolio website built to showca
 * **Responsive Design:** Fully optimized for desktop, tablet, and mobile devices.
 * **Animations:** Smooth fade-ins, scrolling transitions, and hover effects using CSS animations.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Frontend Framework:** [React.js](https://react.dev/)
 * **Build Tool:** [Vite](https://vitejs.dev/)
@@ -33,7 +33,7 @@ A modern, responsive, and interactive personal portfolio website built to showca
 * **Icons:** [Lucide React](https://lucide.dev/)
 * **Email Service:** [EmailJS](https://www.emailjs.com/)
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 Follow these steps to run the project locally.
 
