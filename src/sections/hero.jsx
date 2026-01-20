@@ -14,7 +14,7 @@ const skills = [
   "Node.js",
   "MongoDB",
   "OOP",
-  "Competive pograming",
+  "Competitive pograming",
   "Vercel",
   "Tailwind CSS",
   "Figma",
@@ -147,15 +147,12 @@ export const Hero = () => {
           <p className="text-sm text-muted-foreground mb-12 text-center">
             Technologies I work with
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {skills.map((skill, idx) => (
-              <div
-                key={idx}
-                className="px-4 py-2 rounded-full glass border border-primary/50 hover:border-primary hover:bg-primary/10 transition-all duration-300 group cursor-pointer"
-                style={{ animationDelay: `${idx * 50}ms` }}
-              >
-                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                  #{skill}
+          <div className="relative overflow-hidden"></div>
+          <div className="flex animate-marquee">
+            {[...skills, ...skills].map((skill, idx) => (
+              <div key={idx} className="flex-shrink-0 px-8 py-4">
+                <span className="text-xl font-semibold text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                  {skill}
                 </span>
               </div>
             ))}
