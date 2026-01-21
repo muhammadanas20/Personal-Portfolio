@@ -12,7 +12,7 @@ const App = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <ClickSpark
-        sparkColor="primary"
+        sparkColor="#FFFFFF"
         sparkSize={10}
         sparkRadius={15}
         sparkCount={8}
