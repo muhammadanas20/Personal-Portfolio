@@ -1,4 +1,5 @@
 import { Button } from "@/components/button";
+import { ParticlePortrait } from "@/components/particle-portrait";
 import {
   ChevronDown,
   Github,
@@ -62,7 +63,7 @@ export const Hero = () => {
       <div className="container mx-auto px-6 pt-32 pb-20 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-2 lg:order-1">
             {/* Headline */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-in animation-delay-100">
               MUHAMMAD <span className="text-primary glow-text">ANAS</span>
@@ -112,34 +113,15 @@ export const Hero = () => {
           </div>
 
           {/* Right Column - Profile Image */}
-          <div className="animate-fade-in animation-delay-300 flex justify-center lg:justify-end">
-            <div className="relative w-[240px] h-[300px] sm:w-[280px] sm:h-[340px] md:w-[320px] md:h-[400px] lg:w-[360px] lg:h-[460px]">
-              <div className="relative inset-[-14px] bg-gradient-to-br from-purple-500 via-indigo-500 to-cyan-400 blur-3xl opacity-60 rounded-3xl"></div>
-              <div className="relative glass rounded-3xl p-2 glow-border">
-                <img
-                  src="/profile.png"
-                  alt="M.Anas"
-                  className="relative w-full h-full object-cover rounded-2xl"
-                />
-                <div className="absolute bottom-0 left-0 w-full h-[120px] pointer-events-none">
-                  <div
-                    className="absolute bottom-0 left-[-20%] w-[140%] h-[2px]
-    bg-gradient-to-r from-transparent via-purple-500 to-cyan-400
-    shadow-[0_0_25px_#a855f7]
-    rotate-[-3deg]"
-                  ></div>
-                </div>
-
-                {/* Stats Badge */}
-                <div className="absolute -top-4 -left-4 glass rounded-xl px-4 py-3 animate-float animation-delay-500">
-                  <div className="text-2xl font-bold text-primary">AI</div>
-                  <div className="text-xs text-muted-foreground">
-                    Enthusiast
-                  </div>
-                </div>
+           <div className="animate-fade-in animation-delay-300 order-1 lg:order-2 flex justify-center lg:justify-end lg:-mt-38 lg:-ml-12">
+            <div className="relative w-[280px] h-[340px] sm:w-[320px] sm:h-[390px] md:w-[380px] md:h-[450px] lg:w-[460px] lg:h-[540px]">
+              <div className="relative rounded-3xl p-2 h-full w-full flex items-center justify-center">
+               
+                <ParticlePortrait />
               </div>
             </div>
           </div>
+          
         </div>
 
         {/* Skills Section - Tags */}
