@@ -118,9 +118,7 @@ export const ParticlePortrait = () => {
           p.vx *= 0.88; p.vy *= 0.88;
           p.x += p.vx; p.y += p.vy;
 
-          ctx.strokeStyle = mouseRef.current.active
-            ? themeColorsRef.current.primary
-            : themeColorsRef.current.highlight;
+          ctx.strokeStyle = themeColorsRef.current.primary;
           ctx.globalAlpha = p.currentAlpha;
           ctx.lineWidth = 2.2;
           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.length, p.y); ctx.stroke();
