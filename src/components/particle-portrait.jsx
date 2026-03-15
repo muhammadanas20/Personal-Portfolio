@@ -4,7 +4,12 @@ export const ParticlePortrait = () => {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: -1000, y: -1000, active: false });
   const linesRef = useRef([]);
-  const themeColorsRef = useRef({ primary: "#9d4edd", highlight: "#00d9ff" });
+  const themeColorsRef = useRef({
+    primary: "#9d4edd",
+    highlight: "#00d9ff",
+    background: "#0a0e1a",
+    surface: "#16213e",
+  });
   const imageLoadedRef = useRef(false);
   const startTimeRef = useRef(null);
   const [size, setSize] = useState(480);
@@ -34,9 +39,13 @@ export const ParticlePortrait = () => {
       const rootStyles = getComputedStyle(document.documentElement);
       const primary = rootStyles.getPropertyValue("--color-primary").trim();
       const highlight = rootStyles.getPropertyValue("--color-highlight").trim();
+      const background = rootStyles.getPropertyValue("--color-background").trim();
+      const surface = rootStyles.getPropertyValue("--color-surface").trim();
       themeColorsRef.current = {
         primary: primary || "#9d4edd",
         highlight: highlight || primary || "#00d9ff",
+        background: background || "#0a0e1a",
+        surface: surface || "#16213e",
       };
     };
 
@@ -97,6 +106,26 @@ export const ParticlePortrait = () => {
 
     const draw = () => {
       ctx.clearRect(0, 0, size, size);
+
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, size);
+      bgGradient.addColorStop(0, themeColorsRef.current.surface);
+      bgGradient.addColorStop(1, themeColorsRef.current.background);
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, size, size);
+
+      const vignette = ctx.createRadialGradient(
+        size * 0.5,
+        size * 0.45,
+        size * 0.12,
+        size * 0.5,
+        size * 0.5,
+        size * 0.82
+      );
+      vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+      vignette.addColorStop(1, "rgba(0, 0, 0, 0.45)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, size, size);
+
       if (imageLoadedRef.current && startTimeRef.current !== null) {
         const elapsed = (performance.now() - startTimeRef.current) / 1000;
 
@@ -151,10 +180,15 @@ export const ParticlePortrait = () => {
   }, [size]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="relative z-20 mx-auto w-full h-auto"
-      style={{ cursor: "crosshair", maxWidth: `${size}px` }}
-    />
+    <div
+      className="relative z-20 mx-auto w-full rounded-3xl glass-strong glow-border p-3"
+      style={{ maxWidth: `${size}px` }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="w-full h-auto rounded-2xl"
+        style={{ cursor: "crosshair" }}
+      />
+    </div>
   );
 };
