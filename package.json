@@ -11,12 +11,16 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@tailwindcss/vite": "^4.1.18",
     "emailjs": "^5.0.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "three": "^0.183.2",
+    "three-stdlib": "^2.36.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

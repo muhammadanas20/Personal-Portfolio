@@ -78,7 +78,7 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-4 animate-fade-in animation-delay-300">
               <Button
                 size="lg"
-                href="/cv.png"
+                href="/Muhammad_Anas_Resume.pdf"
                 download
                 target="_blank"
                 rel="noreferrer"
@@ -113,7 +113,7 @@ export const Hero = () => {
           </div>
 
           {/* Right Column - Profile Image */}
-           <div className="animate-fade-in animation-delay-300 order-1 lg:order-2 flex justify-center lg:justify-end lg:-mt-38 lg:-ml-12">
+           <div className="animate-fade-in animation-delay-300 order-1 lg:order-2 flex justify-center lg:justify-end lg:-mt-20 lg:-ml-12">
             <div className="relative w-[280px] h-[340px] sm:w-[320px] sm:h-[390px] md:w-[380px] md:h-[450px] lg:w-[460px] lg:h-[540px]">
               <div className="relative rounded-3xl p-2 h-full w-full flex items-center justify-center">
                
