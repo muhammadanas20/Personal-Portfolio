@@ -10,12 +10,12 @@ export const Button = ({
     onClick,
 }) => {
     const baseClasses =
-        "relative inline-flex overflow-hidden rounded-full font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25 transition-colors";
+        "relative inline-flex items-center justify-center font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-white tactile-button-3d select-none cursor-pointer";
 
     const sizeClasses = {
-        sm: "px-4 py-2 text-sm",
-        default: "px-6 py-3 text-base",
-        lg: "px-8 py-4 text-lg",
+        sm: "px-4 py-1.5 text-sm rounded-lg",
+        default: "px-6 py-2.5 text-base rounded-xl",
+        lg: "px-8 py-3.5 text-lg rounded-2xl",
     };
 
     const classes = `${baseClasses} ${sizeClasses[size]} ${className}`;

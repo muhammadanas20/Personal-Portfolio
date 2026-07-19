@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   Mail,
   Phone,
@@ -7,8 +8,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/button";
-import { useState } from "react";
 import emailjs from "@emailjs/browser";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const contactInfo = [
   {
@@ -42,6 +44,47 @@ export const Contact = () => {
     type: null, // 'success' or 'error'
     message: "",
   });
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    
+    const ctx = gsap.context(() => {
+      gsap.from(".contact-header", {
+        scrollTrigger: {
+          trigger: ".contact-section",
+          start: "top 85%",
+        },
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.from(".contact-form-panel", {
+        scrollTrigger: {
+          trigger: ".contact-grid",
+          start: "top 80%",
+        },
+        x: -40,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.from(".contact-info-panel", {
+        scrollTrigger: {
+          trigger: ".contact-grid",
+          start: "top 80%",
+        },
+        x: 40,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,169 +130,204 @@ export const Contact = () => {
       setIsLoading(false);
     }
   };
+
   return (
-    <section id="contact" className="py-24 md:py-32 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-highlight/5 rounded-full blur-3xl" />
-      </div>
+    <section id="contact" className="contact-section py-24 md:py-32 relative overflow-hidden bg-[#0a0c16]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0a0c16_100%)] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#9d4edd]/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <span className="text-secondary-foreground text-sm font-medium tracking-wider uppercase animate-fade-in">
-            Get In Touch
+        <div className="contact-header text-center max-w-3xl mx-auto mb-20">
+          <span className="text-[#00d9ff] text-xs font-mono tracking-widest uppercase bg-[#00d9ff]/10 border border-[#00d9ff]/30 px-3 py-1 rounded-md">
+            COMMUNICATION //
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold mt-4 mb-5 md:mb-6 animate-fade-in animation-delay-100 text-secondary-foreground">
-            Let's build{" "}
-            <span className="font-serif italic font-normal text-white">
+          <h2 className="text-3xl md:text-5xl font-extrabold mt-4 mb-5 text-white">
+            Let's build <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9d4edd] to-[#00d9ff]">
               something great.
             </span>
           </h2>
-          <p className="text-muted-foreground animate-fade-in animation-delay-200">
-            Have a project in mind? I'd love to hear about it. Send me a message
-            and let's discuss how we can work together.
+          <p className="text-sm sm:text-base text-[#8f9bb3] leading-relaxed">
+            Have a project in mind? Send me a packet from the interface below, and let's configure something together.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 lg:gap-12 max-w-5xl mx-auto items-start">
-          <div className="glass p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-primary/30 animate-fade-in animation-delay-300">
+        <div className="contact-grid grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto items-start">
+          
+          {/* Contact Form Panel */}
+          <div className="contact-form-panel skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
+            <div className="absolute top-3 left-3"><div className="screw-head" /></div>
+            <div className="absolute top-3 right-3"><div className="screw-head" /></div>
+            
+            <div className="mb-6 pb-4 border-b border-[#23273e] flex items-center justify-between">
+              <span className="text-[10px] font-mono tracking-wider text-[#7b68be]">MESSAGE_TRANSMITTER [TX_NODE]</span>
+              <div className="flex items-center gap-1.5">
+                <span className="led-indicator active led-cyan" />
+                <span className="text-[9px] font-mono text-white">TX_READY</span>
+              </div>
+            </div>
+
             <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-xs sm:text-sm font-medium mb-2"
+                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
                 >
-                  Name
+                  // Sender name
                 </label>
                 <input
                   id="name"
                   type="text"
                   required
-                  placeholder="Your name..."
+                  placeholder="e.g. John Doe"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm sm:text-base"
+                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none text-sm sm:text-base transition-colors"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-xs sm:text-sm font-medium mb-2"
+                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
                 >
-                  Email
+                  // Sender address
                 </label>
                 <input
                   id="email"
                   type="email"
                   required
-                  placeholder="your@email.com"
+                  placeholder="e.g. john@example.com"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm sm:text-base"
+                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none text-sm sm:text-base transition-colors"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-xs sm:text-sm font-medium mb-2"
+                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
                 >
-                  Message
+                  // Message payload
                 </label>
                 <textarea
+                  id="message"
                   rows={4}
                   required
                   value={formData.message}
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
-                  placeholder="Your message..."
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface rounded-lg sm:rounded-xl border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm sm:text-base"
+                  placeholder="Write your transmission here..."
+                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none resize-none text-sm sm:text-base transition-colors"
                 />
               </div>
 
               <Button
-                className="w-full flex items-center justify-center"
+                className="w-full flex items-center justify-center gap-2 py-3"
                 type="submit"
                 size="lg"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <>Sending...</>
+                  <>Transmitting...</>
                 ) : (
                   <>
-                    Send Message
-                    <Send className="w-5 h-5" />
+                    <span>Transmit Message</span>
+                    <Send className="w-4 h-4" />
                   </>
                 )}
               </Button>
 
               {submitStatus.type && (
                 <div
-                  className={`flex items-center gap-3
-                     p-4 rounded-xl ${
-                       submitStatus.type === "success"
-                         ? "bg-green-500/10 border border-green-500/20 text-green-400"
-                         : "bg-red-500/10 border border-red-500/20 text-red-400"
-                     }`}
+                  className={`flex items-center gap-3 p-4 rounded-xl border ${
+                    submitStatus.type === "success"
+                      ? "bg-green-500/10 border-green-500/20 text-green-400"
+                      : "bg-red-500/10 border-red-500/20 text-red-400"
+                  }`}
                 >
                   {submitStatus.type === "success" ? (
                     <CheckCircle className="w-5 h-5 flex-shrink-0" />
                   ) : (
                     <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   )}
-                  <p className="text-sm">{submitStatus.message}</p>
+                  <p className="text-xs sm:text-sm font-mono">{submitStatus.message}</p>
                 </div>
               )}
             </form>
+            
+            <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
+            <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
           </div>
 
-          {/* Contact Info */}
-          <div className="space-y-5 sm:space-y-6 animate-fade-in animation-delay-400">
-            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8">
-              <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
-                Contact Information
+          {/* Contact Info Panel */}
+          <div className="contact-info-panel space-y-6">
+            
+            {/* Info Cards Panel */}
+            <div className="skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
+              <div className="absolute top-3 left-3"><div className="screw-head" /></div>
+              <div className="absolute top-3 right-3"><div className="screw-head" /></div>
+              
+              <h3 className="text-lg font-bold text-white mb-6 pt-2">
+                System Terminals [NODE_ADDR]
               </h3>
-              <div className="space-y-3 sm:space-y-4">
+              
+              <div className="space-y-4">
                 {contactInfo.map((item, i) => (
                   <a
                     key={i}
                     href={item.href}
-                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl hover:bg-surface transition-colors group"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-4 p-3 bg-[#0d0f1a] border border-[#1b1f32] hover:border-[#9d4edd] rounded-xl shadow-inner group transition-all duration-200 active:translate-y-[1px]"
                   >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    {/* Beveled Icon socket */}
+                    <div className="w-12 h-12 rounded-xl bg-[#060810] border border-[#1c2035] flex items-center justify-center text-[#7b68be] group-hover:text-white transition-colors flex-shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                      <item.icon className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs sm:text-sm text-muted-foreground">
+                      <div className="text-[10px] font-mono text-[#5e6988] tracking-widest uppercase">
                         {item.label}
                       </div>
-                      <div className="font-medium text-sm sm:text-base truncate">
+                      <div className="text-sm sm:text-base font-bold text-white group-hover:text-[#00d9ff] transition-colors truncate">
                         {item.value}
                       </div>
                     </div>
                   </a>
                 ))}
               </div>
+
+              <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
+              <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
             </div>
 
-            {/* Availability Card */}
-            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-primary/30">
-              <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium text-sm sm:text-base">Open to Opportunities</span>
+            {/* Availability Indicator Panel */}
+            <div className="skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
+              <div className="absolute top-3 left-3"><div className="screw-head" /></div>
+              <div className="absolute top-3 right-3"><div className="screw-head" /></div>
+              
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full led-indicator active" />
+                <span className="font-bold text-sm tracking-wider font-mono text-white">SYS_AVAILABILITY: OPEN</span>
               </div>
-              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
-                I'm currently looking for internships and part-time roles where I can apply my skills in React and C. If you're looking for a motivated developer who is eager to learn and build impactful software, let's connect!
+              <p className="text-xs sm:text-sm text-[#8f9bb3] leading-relaxed font-sans">
+                I'm currently seeking internships and junior roles where I can deploy my React, JavaScript, and programming logic skills. If you need a thorough and driven developer to optimize your system, initiate a transmission!
               </p>
+
+              <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
+              <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
             </div>
+
           </div>
+          
         </div>
       </div>
     </section>
