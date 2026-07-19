@@ -209,7 +209,7 @@ export const Hero = () => {
                   },
                   {
                     icon: Instagram,
-                    href: "https://www.instagram.com/_m._anas_/",
+                    href: "https://www.instagram.com/_m._.anas_/",
                   },
                 ].map((social, idx) => (
                   <a
