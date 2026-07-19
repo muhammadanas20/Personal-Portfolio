@@ -43,6 +43,11 @@
   .font-serif {
     font-family: "Playfair Display", serif;
   }
+
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: none !important;
+  }
 }
 @layer components {
   .glass {

@@ -11,6 +11,7 @@ import { Achievements } from "@/sections/achievements";
 import { Contact } from "@/sections/contact";
 import { Footer } from "@/lay/footer";
 import ClickSpark from "@/components/clickspark";
+import { CreativeCursor } from "@/components/creative-cursor";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +30,7 @@ const App = () => {
             sparkCount={8}
             duration={500}
           >
+            <CreativeCursor />
             <Navbar />
             <main>
               <Hero />
