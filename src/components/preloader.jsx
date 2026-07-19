@@ -5,7 +5,7 @@ import { Terminal, Shield, Cpu, Play } from "lucide-react";
 export const Preloader = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState([]);
-  const logsEndRef = useRef(null);
+  const consoleRef = useRef(null);
 
   const logEvents = [
     { threshold: 2, text: "SYSBOOT: Initializing Muhammad Anas core protocols..." },
@@ -20,9 +20,11 @@ export const Preloader = ({ onComplete }) => {
     { threshold: 100, text: "SUCCESS: Boot sequence complete. Redirecting..." }
   ];
 
-  // Auto-scroll logs
+  // Auto-scroll logs container only (prevents full window scrolling)
   useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
   }, [logs]);
 
   useEffect(() => {
@@ -103,7 +105,10 @@ export const Preloader = ({ onComplete }) => {
         </div>
 
         {/* Console Screen */}
-        <div className="p-5 font-mono text-sm h-64 overflow-y-auto bg-[#05070c] border border-inner border-[#141b2d] m-3 rounded flex flex-col space-y-1.5 scrollbar-none">
+        <div 
+          ref={consoleRef}
+          className="p-5 font-mono text-sm h-64 overflow-y-auto bg-[#05070c] border border-inner border-[#141b2d] m-3 rounded flex flex-col space-y-1.5 scrollbar-none"
+        >
           <div className="text-gray-500 text-xs border-b border-gray-800/50 pb-2 mb-2">
             MUHAMMAD ANAS SECURE WORKSPACE TERMINAL<br/>
             DATE: {new Date().toLocaleDateString()}<br/>
@@ -118,7 +123,6 @@ export const Preloader = ({ onComplete }) => {
               </span>
             </div>
           ))}
-          <div ref={logsEndRef} />
         </div>
 
         {/* Bottom Panel (Loader & Progress) */}
