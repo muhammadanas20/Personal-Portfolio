@@ -99,7 +99,7 @@ export const Hero = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="hero-section relative min-h-screen flex items-center overflow-hidden bg-[#0a0c16] pt-12 sm:pt-16">
+    <section ref={containerRef} className="hero-section relative min-h-screen flex items-center overflow-hidden bg-[#0a0c16] pt-12 sm:pt-16 pb-20 sm:pb-24">
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#16192b_1px,transparent_1px),linear-gradient(to_bottom,#16192b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#0a0c16_100%)] pointer-events-none" />
@@ -254,18 +254,19 @@ export const Hero = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-          <a
-            href="#about"
-            className="flex flex-col items-center gap-1.5 text-[#5e6988] hover:text-[#00d9ff] transition-colors group font-mono text-[10px] tracking-widest"
-          >
-            <span>SCROLL_DOWN</span>
-            <ChevronDown className="w-4 h-4 animate-bounce text-[#00d9ff]" />
-          </a>
-        </div>
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <a
+          href="#about"
+          className="flex flex-col items-center gap-1.5 text-[#5e6988] hover:text-[#00d9ff] transition-colors group font-mono text-[10px] tracking-widest"
+        >
+          <span>SCROLL_DOWN</span>
+          <ChevronDown className="w-4 h-4 animate-bounce text-[#00d9ff]" />
+        </a>
       </div>
     </section>
   );
 };
+

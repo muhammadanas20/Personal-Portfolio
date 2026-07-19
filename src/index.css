@@ -385,6 +385,134 @@
     }
   }
 
+  /* CRT Monitor Overlay Styles */
+  .crt-screen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .crt-screen::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 9999;
+    background-size: 100% 3px, 6px 100%;
+    pointer-events: none;
+  }
+
+  .crt-screen::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.6) 100%);
+    z-index: 9998;
+    pointer-events: none;
+  }
+
+  .crt-flicker {
+    animation: crt-flicker-anim 0.15s infinite;
+  }
+
+  .scanline-move {
+    position: relative;
+  }
+  
+  .scanline-move::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0) 50%,
+      rgba(0, 217, 255, 0.1) 50%,
+      rgba(0, 217, 255, 0.1)
+    );
+    background-size: 100% 4px;
+    z-index: 30;
+    pointer-events: none;
+    animation: scanline-scroll 6s linear infinite;
+  }
+
+  @keyframes crt-flicker-anim {
+    0% { opacity: 0.985; }
+    50% { opacity: 1; }
+    100% { opacity: 0.99; }
+  }
+
+  @keyframes scanline-scroll {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  /* Scramble Loaders */
+  .loader-scramble-booting,
+  .loader-scramble-decrypting,
+  .loader-scramble-compiling,
+  .loader-scramble-launching {
+    width: fit-content;
+    font-weight: bold;
+    font-family: monospace;
+    white-space: pre;
+    font-size: 24px;
+    line-height: 1.2em;
+    height: 1.2em;
+    overflow: hidden;
+  }
+
+  .loader-scramble-booting {
+    color: #00d9ff;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+  }
+  .loader-scramble-booting::before {
+    content: "BOOTING...\AooBtiNG...\AOiTgNbo...\AToGiBno...\ABiToNgo...\Abooting...";
+    white-space: pre;
+    display: inline-block;
+    animation: l38-scramble 1.2s infinite steps(6);
+  }
+
+  .loader-scramble-decrypting {
+    color: #9d4edd;
+    text-shadow: 0 0 10px rgba(157, 78, 221, 0.8);
+  }
+  .loader-scramble-decrypting::before {
+    content: "DECRYPTING...\AeryCpiDtng...\ArpycDetgni...\AitypCerdgn...\AcrypDetgni...\Adecrypting...";
+    white-space: pre;
+    display: inline-block;
+    animation: l38-scramble 1.2s infinite steps(6);
+  }
+
+  .loader-scramble-compiling {
+    color: #25d366;
+    text-shadow: 0 0 10px rgba(37, 211, 102, 0.8);
+  }
+  .loader-scramble-compiling::before {
+    content: "COMPILING...\AomCipilng...\AplioCmgni...\AlipmoCgni...\AilipmoCgn...\Acompiling...";
+    white-space: pre;
+    display: inline-block;
+    animation: l38-scramble 1.2s infinite steps(6);
+  }
+
+  .loader-scramble-launching {
+    color: #f4a261;
+    text-shadow: 0 0 10px rgba(244, 162, 97, 0.8);
+  }
+  .loader-scramble-launching::before {
+    content: "LAUNCHING...\AauLncnhig...\AhcnuaLgni...\AlcnuaHing...\AgniHcnaul...\Alaunching...";
+    white-space: pre;
+    display: inline-block;
+    animation: l38-scramble 1.2s infinite steps(6);
+  }
+
+  @keyframes l38-scramble {
+    100% { transform: translateY(-100%); }
+  }
 }
 
 

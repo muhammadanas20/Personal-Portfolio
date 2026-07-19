@@ -1,4 +1,7 @@
 // src/App.jsx
+import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { Preloader } from "@/components/preloader";
 import { Navbar } from "@/lay/navbar";
 import { Hero } from "@/sections/hero";
 import { About } from "@/sections/about";
@@ -10,27 +13,35 @@ import { Footer } from "@/lay/footer";
 import ClickSpark from "@/components/clickspark";
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <ClickSpark
-        sparkColor="#FFFFFF"
-        sparkSize={10}
-        sparkRadius={15}
-        sparkCount={8}
-        duration={500}
-      >
-        {" "}
-        <Navbar />
-        <main>
-          <Hero />
-          <About />
-          <Projects />
-          <Education />
-          <Achievements />
-          <Contact />
-        </main>
-        <Footer />
-      </ClickSpark>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <Preloader key="preloader" onComplete={() => setIsLoading(false)} />
+        ) : (
+          <ClickSpark
+            key="main-content"
+            sparkColor="#FFFFFF"
+            sparkSize={10}
+            sparkRadius={15}
+            sparkCount={8}
+            duration={500}
+          >
+            <Navbar />
+            <main>
+              <Hero />
+              <About />
+              <Projects />
+              <Education />
+              <Achievements />
+              <Contact />
+            </main>
+            <Footer />
+          </ClickSpark>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
