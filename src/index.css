@@ -206,8 +206,35 @@
       inset 1px 1px 1px rgba(255, 255, 255, 0.5);
   }
 
+  .led-red.active {
+    background-color: #e63946;
+    box-shadow: 
+      0 0 8px #e63946,
+      0 0 16px #e63946,
+      inset 1px 1px 1px rgba(255, 255, 255, 0.5);
+  }
+
+  .led-green.active {
+    background-color: #25d366;
+    box-shadow: 
+      0 0 8px #25d366,
+      0 0 16px #25d366,
+      inset 1px 1px 1px rgba(255, 255, 255, 0.5);
+  }
+
+  .led-orange.active {
+    background-color: #f4a261;
+    box-shadow: 
+      0 0 8px #f4a261,
+      0 0 16px #f4a261,
+      inset 1px 1px 1px rgba(255, 255, 255, 0.5);
+  }
+
   .led-purple { background-color: #3b1758; }
   .led-cyan { background-color: #004652; }
+  .led-red { background-color: #5c171e; }
+  .led-green { background-color: #0a401c; }
+  .led-orange { background-color: #4f311c; }
 
   /* Physical metallic screw heads */
   .screw-head {
@@ -345,6 +372,17 @@
     box-shadow: 0 0 40px
         color-mix(in srgb, var(--color-primary) 35%, transparent),
       0 0 80px color-mix(in srgb, var(--color-primary) 25%, transparent);
+  }
+
+  /* Optimizations for short viewports (like laptops) */
+  @media (max-height: 800px) {
+    .hero-section {
+      padding-top: 4rem !important; /* pt-16 */
+    }
+    .hero-section .container {
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+    }
   }
 
 }

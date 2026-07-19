@@ -6,7 +6,7 @@ export const ProfileCard = () => {
   const [isFilterOn, setIsFilterOn] = useState(false);
 
   return (
-    <TiltedCard className="w-full max-w-[420px] mx-auto">
+    <TiltedCard className="w-full max-w-[310px] sm:max-w-[360px] lg:max-w-[380px] xl:max-w-[420px] mx-auto">
       {/* Outer physical console chassis */}
       <div className="relative p-6 bg-gradient-to-br from-[#24293f] to-[#121422] rounded-3xl border border-[#3b4260] shadow-2xl">
         {/* Beveled Top Inset */}

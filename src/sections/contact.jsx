@@ -132,7 +132,7 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="contact-section py-24 md:py-32 relative overflow-hidden bg-[#0a0c16]">
+    <section id="contact" className="contact-section py-20 md:py-24 relative overflow-hidden bg-[#0a0c16]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0a0c16_100%)] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#9d4edd]/5 rounded-full blur-[100px] pointer-events-none" />
 

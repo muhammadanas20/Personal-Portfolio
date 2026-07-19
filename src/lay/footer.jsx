@@ -4,7 +4,7 @@ import { Github, Linkedin, Instagram } from "lucide-react";
 const socialLinks = [
   { icon: Github, href: "https://github.com/muhammadanas20", label: "GitHub" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/muhammadanas20/", label: "LinkedIn" },
-  { icon: Instagram, href: "https://www.instagram.com/anastrix.20/?hl=en", label: "Instagram" },
+  { icon: Instagram, href: "https://www.instagram.com/_m._.anas_/", label: "Instagram" },
 ];
 
 const footerLinks = [

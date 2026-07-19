@@ -60,7 +60,7 @@ export const Education = () => {
   }, []);
 
   return (
-    <section id="education" className="education-section py-32 relative overflow-hidden bg-[#070911]">
+    <section id="education" className="education-section py-20 md:py-24 relative overflow-hidden bg-[#070911]">
       <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[#9d4edd]/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">

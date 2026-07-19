@@ -4,6 +4,7 @@ import { Hero } from "@/sections/hero";
 import { About } from "@/sections/about";
 import { Projects } from "@/sections/projects";
 import { Education } from "@/sections/education";
+import { Achievements } from "@/sections/achievements";
 import { Contact } from "@/sections/contact";
 import { Footer } from "@/lay/footer";
 import ClickSpark from "@/components/clickspark";
@@ -25,6 +26,7 @@ const App = () => {
           <About />
           <Projects />
           <Education />
+          <Achievements />
           <Contact />
         </main>
         <Footer />

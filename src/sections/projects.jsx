@@ -7,7 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const projects = [
   {
-    title: "Election System",
+    title: "PF - Election Voting System",
+    category: "semester",
     description:
       "A robust digital voting simulation designed to manage the entire election process securely. It features a comprehensive admin panel for candidate management, a secure voter authentication system, and automated vote counting using persistent file handling to ensure data integrity.",
     image: "/projects/project1.gif",
@@ -15,20 +16,63 @@ const projects = [
     link: "https://github.com/muhammadanas20/pf-project-election-system",
     github: "https://github.com/muhammadanas20/pf-project-election-system",
     color: "#9d4edd",
+    ledColor: "purple",
   },
   {
-    title: "GitHub Profile Finder",
+    title: "OOP - Military Base Management",
+    category: "semester",
     description:
-      "An interactive web application that allows users to search for any GitHub developer and instantly view their profile stats. It integrates with the public GitHub API to fetch real-time data—including repositories, followers, and bio information—presented in a clean, responsive interface.",
-    image: "/projects/project2.png",
-    tags: ["JavaScript", "HTML/CSS", "API Integration"],
-    link: "https://muhammadanas20.github.io/GITHUB-Profile-Finder/",
-    github: "https://github.com/muhammadanas20/GITHUB-Profile-Finder",
+      "A comprehensive Command & Control simulation for military bases implemented in C++ following OOP principles. Manages personnel, logistics, weapons inventory, operations, and generates secure audit logs with custom exception handling.",
+    video: "/projects/military_simulation.mp4",
+    isVideo: true,
+    tags: ["C++", "OOP", "File Handling", "System Design"],
+    link: "https://github.com/muhammadanas20/Millitary-Base-Managment-System",
+    github: "https://github.com/muhammadanas20/Millitary-Base-Managment-System",
+    color: "#e63946",
+    ledColor: "red",
+  },
+  {
+    title: "Rag-Wa-AI",
+    category: "ai-automation",
+    description:
+      "An advanced Retrieval-Augmented Generation (RAG) assistant designed to ingest local knowledge repositories and provide highly context-aware, accurate AI responses. Built with modern LLMs and vector databases for semantic search.",
+    image: "/projects/rag_wa_ai.jpg",
+    tags: ["Python", "RAG", "LangChain", "Vector DB", "LLM"],
+    link: "https://github.com/muhammadanas20/Rag-Wa-AI",
+    github: "https://github.com/muhammadanas20/Rag-Wa-AI",
     color: "#00d9ff",
+    ledColor: "cyan",
+  },
+  {
+    title: "Quiz-Wa-Bot",
+    category: "ai-automation",
+    description:
+      "An interactive AI-powered WhatsApp bot that hosts dynamically generated quizzes and trivia sessions. Integrates conversational AI agents with message routing to engage users and track test results directly in chat.",
+    image: "/projects/quiz_wa_bot.jpg",
+    tags: ["Node.js", "WhatsApp API", "AI Agents", "Quiz Engine"],
+    link: "https://github.com/muhammadanas20/Quiz-Wa-Bot",
+    github: "https://github.com/muhammadanas20/Quiz-Wa-Bot",
+    color: "#25d366",
+    ledColor: "green",
+  },
+  {
+    title: "Gcr-Assignment-Bot",
+    category: "ai-automation",
+    description:
+      "An automation system that integrates with Google Classroom to track, organize, and manage academic assignments. It automates downloads, file classification, and deadline monitoring to streamline coursework workflows.",
+    image: "/projects/gcr_assignment_bot.jpg",
+    tags: ["Python", "Selenium", "Google API", "Automation"],
+    link: "https://github.com/muhammadanas20/Gcr-Assignment-Bot",
+    github: "https://github.com/muhammadanas20/Gcr-Assignment-Bot",
+    color: "#f4a261",
+    ledColor: "orange",
   },
 ];
 
 export const Projects = () => {
+  const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [filteredProjects, setFilteredProjects] = React.useState(projects);
+
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     
@@ -60,8 +104,36 @@ export const Projects = () => {
     return () => ctx.revert();
   }, []);
 
+  const handleCategoryChange = (category) => {
+    if (category === selectedCategory) return;
+    
+    // Fade out current cards
+    gsap.to(".project-card-wrapper", {
+      opacity: 0,
+      y: 20,
+      duration: 0.3,
+      stagger: 0.05,
+      ease: "power2.in",
+      onComplete: () => {
+        setSelectedCategory(category);
+        const filtered = category === "all" 
+          ? projects 
+          : projects.filter(p => p.category === category);
+        setFilteredProjects(filtered);
+        
+        // Wait a tiny bit for DOM to update, then animate in
+        setTimeout(() => {
+          gsap.fromTo(".project-card-wrapper", 
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" }
+          );
+        }, 30);
+      }
+    });
+  };
+
   return (
-    <section id="projects" className="projects-section py-32 relative overflow-hidden bg-[#0a0c16]">
+    <section id="projects" className="projects-section py-20 md:py-24 relative overflow-hidden bg-[#0a0c16]">
       {/* Background glow and details */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0a0c16_100%)] pointer-events-none" />
       <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-[#00d9ff]/5 rounded-full blur-[100px] pointer-events-none" />
@@ -69,7 +141,7 @@ export const Projects = () => {
       <div className="container mx-auto px-6 relative z-10">
         
         {/* Section Header */}
-        <div className="projects-header text-center mx-auto max-w-3xl mb-20">
+        <div className="projects-header text-center mx-auto max-w-3xl mb-16">
           <span className="text-[#00d9ff] text-xs font-mono tracking-widest uppercase bg-[#00d9ff]/10 border border-[#00d9ff]/30 px-3 py-1 rounded-md">
             MY_WORKS //
           </span>
@@ -80,14 +152,35 @@ export const Projects = () => {
             </span>
           </h2>
           <p className="text-sm sm:text-base text-[#8f9bb3] leading-relaxed">
-            A selection of my recent academic projects, ranging from low-level logic structures to frontend web applications integrated with live public APIs.
+            A selection of my recent works, categorized into semester projects showing core concepts and personal growth in AI automation.
           </p>
+        </div>
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
+          {[
+            { id: "all", label: "ALL_PROJECTS" },
+            { id: "semester", label: "SEMESTER_PROJECTS" },
+            { id: "ai-automation", label: "AI_&_AUTOMATION" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleCategoryChange(tab.id)}
+              className={`px-5 py-2.5 rounded-lg border text-xs font-mono font-bold tracking-wider transition-all duration-300 relative overflow-hidden active:translate-y-[2px] ${
+                selectedCategory === tab.id
+                  ? "bg-[#00d9ff]/10 border-[#00d9ff] text-[#00d9ff] shadow-[0_0_15px_rgba(0,217,255,0.15)]"
+                  : "bg-[#0c0d18] border-[#2e344e] text-[#8f9bb3] hover:text-white hover:border-[#9d4edd]/50 hover:bg-[#9d4edd]/5"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Projects Grid */}
         <div className="projects-grid grid md:grid-cols-2 gap-10">
-          {projects.map((project, idx) => (
-            <TiltedCard key={idx} className="project-card-wrapper w-full h-full">
+          {filteredProjects.map((project, idx) => (
+            <TiltedCard key={`${selectedCategory}-${idx}`} className="project-card-wrapper w-full h-full">
               {/* Outer Skeuomorphic Panel */}
               <div className="skeuo-panel border border-[#2e344e] flex flex-col h-full group">
                 
@@ -95,21 +188,35 @@ export const Projects = () => {
                 <div className="absolute top-3 left-3"><div className="screw-head" /></div>
                 <div className="absolute top-3 right-3"><div className="screw-head" /></div>
 
-                {/* Beveled Image Window */}
+                {/* Beveled Image/Video Window */}
                 <div className="relative mx-5 mt-8 mb-5 overflow-hidden aspect-video rounded-xl bg-[#060810] border-2 border-[#161a2c] shadow-[inset_0_0_12px_rgba(0,0,0,0.9)]">
                   {/* CRT Glass reflection */}
                   <div className="glare-overlay" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10 pointer-events-none" />
                   
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {project.isVideo ? (
+                    <video
+                      src={project.video}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      ref={(el) => {
+                        if (el) el.playbackRate = 2.0;
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  )}
                   
                   {/* Live Status LED */}
                   <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md border border-white/5">
-                    <span className={`led-indicator active ${project.color === "#9d4edd" ? "led-purple" : "led-cyan"}`} />
+                    <span className={`led-indicator active led-${project.ledColor}`} />
                     <span className="text-[8px] font-mono text-white tracking-widest uppercase">ACTIVE</span>
                   </div>
                 </div>

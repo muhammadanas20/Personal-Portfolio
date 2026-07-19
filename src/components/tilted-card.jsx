@@ -61,7 +61,15 @@ export const TiltedCard = ({ children, className = "", style = {} }) => {
       />
       
       {/* Main card content */}
-      <div style={{ transform: "translateZ(15px)", transformStyle: "preserve-3d" }}>
+      <div 
+        className={`w-full ${className.includes("h-full") ? "h-full" : ""}`}
+        style={{ 
+          transform: "translateZ(15px)", 
+          transformStyle: "preserve-3d",
+          width: "100%",
+          height: className.includes("h-full") ? "100%" : "auto"
+        }}
+      >
         {children}
       </div>
     </motion.div>

@@ -1,40 +1,98 @@
-import React, { useEffect } from "react";
-import { Code2, Lightbulb, Rocket, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Code2, Lightbulb, Rocket, Users, Brain } from "lucide-react";
 import { TiltedCard } from "@/components/tilted-card";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const highlights = [
   {
-    icon: Code2,
-    title: "Clean Code",
+    icon: Brain,
+    title: "AI & ML Integration",
     description:
-      "Writing maintainable, scalable code that stands the test of time.",
+      "Integrating intelligent LLM pipelines, RAG, and automation agents into applications.",
+    color: "#00d9ff",
+  },
+  {
+    icon: Code2,
+    title: "Full-Stack Dev",
+    description:
+      "Building modern responsive frontends coupled with scalable backend APIs.",
     color: "#9d4edd",
   },
   {
     icon: Rocket,
     title: "Performance",
     description:
-      "Optimizing for speed and delivering lightning-fast user experiences.",
+      "Optimizing database queries and model latency for lightning-fast speeds.",
     color: "#00d9ff",
-  },
-  {
-    icon: Users,
-    title: "Collaboration",
-    description: "Working closely with teams to bring ideas to life.",
-    color: "#9d4edd",
   },
   {
     icon: Lightbulb,
-    title: "Innovation",
+    title: "Tactile Interfaces",
     description:
-      "Staying ahead with the latest technologies and best practices.",
-    color: "#00d9ff",
+      "Designing creative, physics-based, and highly interactive user experiences.",
+    color: "#9d4edd",
   },
 ];
 
 export const About = () => {
+  const [pipelineActive, setPipelineActive] = useState(false);
+  const [pipelineSteps, setPipelineSteps] = useState([
+    { label: "1. KNOWLEDGE_INGEST (RAG)", status: "WAITING", led: "" },
+    { label: "2. VECTOR_INDEXING (LangChain)", status: "WAITING", led: "" },
+    { label: "3. MODEL_ALIGNMENT (OpenCV)", status: "WAITING", led: "" },
+    { label: "4. AGENTIC_EXECUTION", status: "WAITING", led: "" },
+  ]);
+
+  const runPipelineDemo = () => {
+    if (pipelineActive) return;
+    setPipelineActive(true);
+    
+    setPipelineSteps([
+      { label: "1. KNOWLEDGE_INGEST (RAG)", status: "PENDING", led: "active led-orange" },
+      { label: "2. VECTOR_INDEXING (LangChain)", status: "WAITING", led: "" },
+      { label: "3. MODEL_ALIGNMENT (OpenCV)", status: "WAITING", led: "" },
+      { label: "4. AGENTIC_EXECUTION", status: "WAITING", led: "" },
+    ]);
+
+    setTimeout(() => {
+      setPipelineSteps(prev => [
+        { ...prev[0], status: "SUCCESS", led: "active led-green" },
+        { ...prev[1], status: "PENDING", led: "active led-orange" },
+        prev[2],
+        prev[3]
+      ]);
+    }, 1000);
+
+    setTimeout(() => {
+      setPipelineSteps(prev => [
+        prev[0],
+        { ...prev[1], status: "SUCCESS", led: "active led-green" },
+        { ...prev[2], status: "PENDING", led: "active led-orange" },
+        prev[3]
+      ]);
+    }, 2000);
+
+    setTimeout(() => {
+      setPipelineSteps(prev => [
+        prev[0],
+        prev[1],
+        { ...prev[2], status: "SUCCESS", led: "active led-green" },
+        { ...prev[3], status: "PENDING", led: "active led-orange" }
+      ]);
+    }, 3000);
+
+    setTimeout(() => {
+      setPipelineSteps(prev => [
+        prev[0],
+        prev[1],
+        prev[2],
+        { ...prev[3], status: "COMPLETE", led: "active led-green" }
+      ]);
+      setPipelineActive(false);
+    }, 4200);
+  };
+
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     
@@ -79,11 +137,11 @@ export const About = () => {
   }, []);
 
   return (
-    <section id="about" className="about-section py-32 relative overflow-hidden bg-[#070911]">
+    <section id="about" className="about-section py-20 md:py-24 relative overflow-hidden bg-[#070911]">
       {/* Grid lines and background detailing */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#070911_100%)] pointer-events-none" />
       <div className="absolute -top-1/4 right-0 w-[450px] h-[450px] bg-[#9d4edd]/5 rounded-full blur-[100px] pointer-events-none" />
-
+ 
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           
@@ -94,30 +152,56 @@ export const About = () => {
                 GET_TO_KNOW_ME //
               </span>
               <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-white">
-                Crafting web experiences <br />
+                Designing systems <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9d4edd] to-[#00d9ff]">
-                  with purpose.
+                  that think and adapt.
                 </span>
               </h2>
             </div>
 
             <div className="about-text-container space-y-5 text-[#8f9bb3] text-sm sm:text-base leading-relaxed">
               <p className="about-para">
-                I’m a passionate Computer Science student at FAST NUCES with a drive for crafting digital products that solve real problems. My journey started with a curiosity for logic and C programming, and it has quickly evolved into a focus on modern web development.
+                I am a second-year Computer Science student at FAST NUCES, working at the intersection of full-stack web development, AI, and Machine Learning. I specialize in building intelligent automations and interactive digital solutions that bridge logic, data, and user experience.
               </p>
               <p className="about-para">
-                I specialize in HTML, CSS, JavaScript, and React, building everything from student utility applications to online election systems. My approach combines strong programming fundamentals with a creative eye for design, ensuring the user interface is as sharp as the code behind it.
+                My current stack includes React, Node.js, Python, and LangChain. I'm actively developing RAG (Retrieval-Augmented Generation) applications, conversational AI agents, and custom classroom automations, focusing on robust backend pipelines coupled with sleek, responsive interfaces.
               </p>
               <p className="about-para">
-                When I'm not coding, you'll find me sharpening my problem-solving skills on LeetCode, diving into Object-Oriented Programming, or collaborating with teammates to build impactful projects.
+                When I'm not coding, you'll find me sharpening my algorithmic skills on LeetCode, exploring modern AI agent frameworks, or designing tactile console interfaces.
               </p>
             </div>
 
-            {/* Skeuomorphic Quote Panel */}
-            <div className="about-para skeuo-inset p-6 border border-[#1b1f32]">
-              <p className="text-sm italic font-medium text-white leading-relaxed font-sans">
-                "My mission is to create digital experiences that are not just functional, but truly helpful — products that simplify lives and look good doing it."
-              </p>
+            {/* Interactive Automation Pipeline Panel */}
+            <div className="about-para skeuo-panel p-5 border border-[#2e344e] space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2e344e] pb-2">
+                <span className="text-[10px] font-mono tracking-widest text-[#00d9ff] font-bold">
+                  AI_PIPELINE_INGESTER //
+                </span>
+                <span className="flex items-center gap-1.5 bg-black/40 px-2.5 py-0.5 rounded border border-[#1b1f32] text-[8px] font-mono text-white/80">
+                  <span className={`w-1.5 h-1.5 rounded-full led-indicator ${pipelineActive ? "active led-orange" : "active led-green"}`} />
+                  {pipelineActive ? "PROCESSING" : "STANDBY"}
+                </span>
+              </div>
+              
+              <div className="space-y-2.5 font-mono text-[10px]">
+                {pipelineSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <span className="text-[#8f9bb3]">{step.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-bold">{step.status}</span>
+                      <span className={`w-2 h-2 rounded-full border border-black/40 led-indicator ${step.led}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                onClick={runPipelineDemo}
+                disabled={pipelineActive}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-white tactile-button-3d cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pipelineActive ? "Running Diagnostics..." : "Run AI Pipeline Demo"}
+              </button>
             </div>
           </div>
 
