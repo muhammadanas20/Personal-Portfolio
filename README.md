@@ -69,3 +69,33 @@ To create a production-ready build:
 
 
 ```npm run build```
+
+## SEO & Google Search Console (step-by-step)
+
+This repo is already wired up for search engines. The site ships with:
+
+| File | What it does |
+| --- | --- |
+| `public/robots.txt` | Tells Googlebot it may crawl everything and points to the sitemap. Deployed at `https://anastrix.live/robots.txt`. |
+| `public/sitemap.xml` | Lists all indexable URLs. Deployed at `https://anastrix.live/sitemap.xml`. |
+| `index.html` | Meta title/description, canonical URL, Open Graph + Twitter cards, favicons, and JSON-LD `Person` structured data with your real GitHub/LinkedIn/Instagram profiles. |
+| `public/og-image.png` | 1200x630 share image used when your link is shared on WhatsApp, LinkedIn, X, Facebook, etc. |
+| `vercel.json` | Redirects the old `/Sitemap.xml` to `/sitemap.xml` and sets cache headers. |
+
+> The DNS record you added in Google Search Console already **verifies ownership** — that part is done. The steps below are what actually gets your site indexed.
+
+### After every deploy, do this in [Google Search Console](https://search.google.com/search-console)
+
+1. **Submit the sitemap** — sidebar → **Sitemaps** → paste `https://anastrix.live/sitemap.xml` → **Submit**. Status should become "Success".
+2. **Test robots.txt** — Google usually fetches this automatically; you can confirm under **Settings → robots.txt**.
+3. **Inspect your homepage** — paste `https://anastrix.live/` into the top search bar → click **Request Indexing**. Do this again whenever you change your intro text, projects, or title.
+4. **Check the "Live Test"** in the same URL inspection panel — it shows the rendered page, your meta tags, and the `Person` structured data Google detected. "Valid" structured data = eligible for rich results.
+5. **Wait** — indexing takes a few days to a few weeks for a new domain. Don't re-submit constantly; it doesn't speed things up.
+
+### Tips that actually move the needle
+
+- **Backlinks:** link to `anastrix.live` from your GitHub profile/bio, LinkedIn, Instagram, and any project READMEs. Backlinks are the biggest factor for a personal site.
+- **Update content:** Google re-crawls more often when the page changes. New projects, new achievements = new crawl.
+- **Don't list fake URLs:** this is a single-page site — all sections live on `/` (`#about`, `#projects`, etc. are on-page anchors, not separate pages). That's why the sitemap only contains the homepage; listing `/about` or `/projects` there would return 404s and look bad to Google.
+- **Share the link:** Google discovers new sites fastest through social shares and other pages linking to it.
+

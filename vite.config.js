@@ -1,15 +1,15 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
-import react from '@vitejs.plugin-react'
-import Sitemap from 'vite-plugin-sitemap'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    Sitemap({
-      hostname: 'https://anastrix.live',
-      // Add client-side paths if you have multiple pages:
-      dynamicRoutes: ['/about', '/projects', '/contact'],
-      robots: [{ userAgent: '*', allow: '/' }]
-    })
-  ]
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      // Lets src files import via "@/components/..." etc.
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
 })
