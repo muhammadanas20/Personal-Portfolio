@@ -1,248 +1,194 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+
+const HOVER_SEL =
+  "a, button, [role='button'], input, select, textarea, .tactile-button-3d, .cursor-pointer, [data-cursor-hover]";
 
 export const CreativeCursor = () => {
-  const cursorRef = useRef(null);
-  
-  const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [hoverType, setHoverType] = useState("");
-  const [isClicked, setIsClicked] = useState(false);
-  const [isTouch, setIsTouch] = useState(true); // Default to true (hidden) until mouse/pointer activity is detected
-
-  // Position tracker
-  const mouse = useRef({ x: 0, y: 0 });
-  const cursorPos = useRef({ x: 0, y: 0 });
+  const rootRef = useRef(null);
+  const ringRef = useRef(null);
+  const dotRef = useRef(null);
 
   useEffect(() => {
-    const handlePointerMove = (e) => {
-      // Disable custom cursor for touch inputs
-      if (e.pointerType === "touch") {
-        setIsTouch(true);
-        document.body.classList.remove("custom-cursor-active");
+    const root = rootRef.current;
+    const ring = ringRef.current;
+    const dot = dotRef.current;
+    if (!root || !ring || !dot) return;
+
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!finePointer) {
+      root.style.display = "none";
+      return;
+    }
+
+    document.body.classList.add("custom-cursor-active");
+
+    let x = 0;
+    let y = 0;
+    let rx = 0;
+    let ry = 0;
+    let visible = false;
+    let hover = "";
+    let clicked = false;
+    let raf = 0;
+
+    const applyMode = () => {
+      const isBtn = hover === "button";
+      const isInput = hover === "input";
+      const isLink = hover === "link";
+
+      root.style.opacity = visible ? "1" : "0";
+
+      if (isInput) {
+        dot.style.width = "2px";
+        dot.style.height = "18px";
+        dot.style.borderRadius = "1px";
+        dot.style.background = "#66e6ff";
+        ring.style.width = "0px";
+        ring.style.height = "0px";
+        ring.style.opacity = "0";
         return;
       }
 
-      // Enable custom cursor for mouse or stylus
-      setIsTouch(false);
+      dot.style.width = clicked ? "6px" : hover ? "8px" : "6px";
+      dot.style.height = clicked ? "6px" : hover ? "8px" : "6px";
+      dot.style.borderRadius = "50%";
+      dot.style.background = isBtn ? "#c084fc" : "#66e6ff";
+
+      const size = clicked ? 18 : isBtn ? 52 : isLink ? 40 : 28;
+      ring.style.width = `${size}px`;
+      ring.style.height = `${size}px`;
+      ring.style.opacity = "1";
+      ring.style.borderColor = isBtn
+        ? "rgba(192, 132, 252, 0.85)"
+        : isLink
+          ? "rgba(102, 230, 255, 0.7)"
+          : "rgba(232, 234, 246, 0.35)";
+      ring.style.background = isBtn
+        ? "rgba(157, 78, 221, 0.08)"
+        : "transparent";
+    };
+
+    const tick = () => {
+      rx += (x - rx) * 0.35;
+      ry += (y - ry) * 0.35;
+      // Dot is locked to the pointer (no lag)
+      root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      // Ring eases slightly behind for a modern trailing ring
+      ring.style.transform = `translate3d(${rx - x}px, ${ry - y}px, 0)`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const classify = (el) => {
+      if (!el || el === document.body || el === document.documentElement) return "";
+      if (el.matches?.("input, textarea, select, [contenteditable='true']")) return "input";
+      if (el.matches?.("button, [role='button'], .tactile-button-3d")) return "button";
+      if (el.matches?.(HOVER_SEL)) return "link";
+      return classify(el.parentElement);
+    };
+
+    const onMove = (e) => {
+      if (e.pointerType === "touch") {
+        root.style.display = "none";
+        document.body.classList.remove("custom-cursor-active");
+        return;
+      }
+      root.style.display = "";
       document.body.classList.add("custom-cursor-active");
-
-      mouse.current.x = e.clientX;
-      mouse.current.y = e.clientY;
-      if (!isVisible) {
-        setIsVisible(true);
+      x = e.clientX;
+      y = e.clientY;
+      if (!visible) {
+        visible = true;
+        rx = x;
+        ry = y;
+        applyMode();
       }
     };
 
-    const handlePointerDown = (e) => {
+    const onOver = (e) => {
+      const next = classify(e.target);
+      if (next !== hover) {
+        hover = next;
+        applyMode();
+      }
+    };
+
+    const onDown = (e) => {
       if (e.pointerType === "touch") return;
-      setIsClicked(true);
+      clicked = true;
+      applyMode();
     };
 
-    const handlePointerUp = () => {
-      setIsClicked(false);
+    const onUp = () => {
+      clicked = false;
+      applyMode();
     };
 
-    const handleMouseLeave = () => {
-      setIsVisible(false);
+    const onLeave = () => {
+      visible = false;
+      applyMode();
     };
 
-    const handleMouseEnter = () => {
-      setIsVisible(true);
+    const onEnter = () => {
+      visible = true;
+      applyMode();
     };
 
-    // Use PointerEvents to support hybrid desktop/touch environments
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointerup", handlePointerUp);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter);
+    applyMode();
+    raf = requestAnimationFrame(tick);
 
-    let animationFrameId;
-    // Fast lerp speed (0.6) for snappy, lightweight response
-    const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
-
-    const updatePosition = () => {
-      cursorPos.current.x = lerp(cursorPos.current.x, mouse.current.x, 0.6);
-      cursorPos.current.y = lerp(cursorPos.current.y, mouse.current.y, 0.6);
-
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate3d(${cursorPos.current.x}px, ${cursorPos.current.y}px, 0) translate(-50%, -50%)`;
-      }
-
-      animationFrameId = requestAnimationFrame(updatePosition);
-    };
-
-    // Initialize positions to avoid jumping from top-left (0,0)
-    const initPositions = (e) => {
-      if (e.pointerType === "touch") return;
-      cursorPos.current.x = e.clientX;
-      cursorPos.current.y = e.clientY;
-      window.removeEventListener("pointermove", initPositions);
-    };
-    window.addEventListener("pointermove", initPositions);
-
-    updatePosition();
-
-    // Hover event listeners
-    const handleElementMouseEnter = (e) => {
-      setIsHovered(true);
-      const target = e.currentTarget;
-      if (
-        target.classList.contains("tactile-button-3d") || 
-        target.tagName === "BUTTON" || 
-        target.getAttribute("role") === "button"
-      ) {
-        setHoverType("button");
-      } else if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") {
-        setHoverType("input");
-      } else {
-        setHoverType("link");
-      }
-    };
-
-    const handleElementMouseLeave = () => {
-      setIsHovered(false);
-      setHoverType("");
-    };
-
-    const attachHoverListeners = () => {
-      const clickables = document.querySelectorAll(
-        "a, button, [role='button'], input, select, textarea, .tactile-button-3d, .cursor-pointer, [data-cursor-hover]"
-      );
-      clickables.forEach((el) => {
-        el.addEventListener("mouseenter", handleElementMouseEnter);
-        el.addEventListener("mouseleave", handleElementMouseLeave);
-      });
-    };
-
-    attachHoverListeners();
-
-    // MutationObserver handles binding newly rendered DOM elements
-    const observer = new MutationObserver(() => attachHoverListeners());
-    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    document.addEventListener("mouseover", onOver, { passive: true });
+    document.addEventListener("mouseleave", onLeave);
+    document.addEventListener("mouseenter", onEnter);
 
     return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointermove", initPositions);
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      document.removeEventListener("mouseenter", handleMouseEnter);
-      cancelAnimationFrame(animationFrameId);
-      observer.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      document.removeEventListener("mouseover", onOver);
+      document.removeEventListener("mouseleave", onLeave);
+      document.removeEventListener("mouseenter", onEnter);
       document.body.classList.remove("custom-cursor-active");
-      
-      const clickables = document.querySelectorAll(
-        "a, button, [role='button'], input, select, textarea, .tactile-button-3d, .cursor-pointer, [data-cursor-hover]"
-      );
-      clickables.forEach((el) => {
-        el.removeEventListener("mouseenter", handleElementMouseEnter);
-        el.removeEventListener("mouseleave", handleElementMouseLeave);
-      });
     };
-  }, [isVisible]);
-
-  if (isTouch) return null;
-
-  // Offsets for ticks to slide outward dynamically on hover
-  // Normal state: 6px
-  // Hover states: 14px (button/tactile-control) or 10px (normal links)
-  // Click state: 2px (tight contraction)
-  let tickOffset = 6;
-  if (isClicked) {
-    tickOffset = 2;
-  } else if (isHovered) {
-    tickOffset = hoverType === "button" ? 14 : 10;
-  }
-
-  // Aesthetic values matching the cyberpunk color themes
-  const tickColor = isHovered 
-    ? hoverType === "button" 
-      ? "bg-[#9d4edd]" 
-      : "bg-[#00d9ff]" 
-    : "bg-[#00d9ff]";
-
-  const glowShadow = isHovered
-    ? hoverType === "button"
-      ? "shadow-[0_0_8px_#9d4edd]"
-      : "shadow-[0_0_6px_#00d9ff]"
-    : "shadow-[0_0_6px_#00d9ff]";
+  }, []);
 
   return (
     <div
-      ref={cursorRef}
-      className={`fixed top-0 left-0 pointer-events-none z-[99999] will-change-transform transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
+      ref={rootRef}
+      aria-hidden
+      className="pointer-events-none fixed top-0 left-0 z-[99999] mix-blend-difference"
       style={{
-        transform: "translate3d(-100px, -100px, 0)",
-        width: "60px",
-        height: "60px",
+        opacity: 0,
+        transform: "translate3d(-100px,-100px,0)",
+        willChange: "transform",
       }}
     >
-      {/* 1. Center Dot/Reticle Core (Becomes a vertical cursor bar on text inputs) */}
-      <div 
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${tickColor} ${glowShadow} ${
-          isClicked ? "scale-50" : "scale-100"
-        }`} 
+      <div
+        ref={ringRef}
+        className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 rounded-full border"
         style={{
-          width: hoverType === "input" ? "2px" : "4px",
-          height: hoverType === "input" ? "14px" : "4px",
-          borderRadius: hoverType === "input" ? "1px" : "50%",
+          width: 28,
+          height: 28,
+          borderColor: "rgba(232, 234, 246, 0.35)",
+          transition:
+            "width 160ms cubic-bezier(.2,.8,.2,1), height 160ms cubic-bezier(.2,.8,.2,1), border-color 160ms ease, background-color 160ms ease, opacity 160ms ease",
+          willChange: "transform, width, height",
         }}
       />
-
-      {/* 2. Four Crosshair Ticks (hidden during text input hovers) */}
-      {hoverType !== "input" && (
-        <>
-          {/* Top Tick */}
-          <div
-            className={`absolute left-1/2 -translate-x-1/2 w-[1px] h-[5px] transition-all duration-300 ${tickColor} ${glowShadow}`}
-            style={{
-              top: `calc(50% - ${tickOffset}px - 5px)`,
-            }}
-          />
-          {/* Bottom Tick */}
-          <div
-            className={`absolute left-1/2 -translate-x-1/2 w-[1px] h-[5px] transition-all duration-300 ${tickColor} ${glowShadow}`}
-            style={{
-              bottom: `calc(50% - ${tickOffset}px - 5px)`,
-            }}
-          />
-          {/* Left Tick */}
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 h-[1px] w-[5px] transition-all duration-300 ${tickColor} ${glowShadow}`}
-            style={{
-              left: `calc(50% - ${tickOffset}px - 5px)`,
-            }}
-          />
-          {/* Right Tick */}
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 h-[1px] w-[5px] transition-all duration-300 ${tickColor} ${glowShadow}`}
-            style={{
-              right: `calc(50% - ${tickOffset}px - 5px)`,
-            }}
-          />
-        </>
-      )}
-
-      {/* 3. Outer Rotating Scanner Circle (Fades in on hover) */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed transition-all duration-300 ease-out ${
-          isHovered
-            ? hoverType === "button"
-              ? "w-[44px] h-[44px] border-[#00d9ff] opacity-100 scale-100 animate-[spin_10s_linear_infinite] bg-[#00d9ff]/5"
-              : "w-[36px] h-[36px] border-[#9d4edd] opacity-80 scale-100 animate-[spin_15s_linear_infinite]"
-            : "w-[20px] h-[20px] border-transparent opacity-0 scale-50"
-        } ${isClicked ? "scale-75 border-solid border-[#00d9ff]" : ""}`}
+        ref={dotRef}
+        className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          width: 6,
+          height: 6,
+          background: "#66e6ff",
+          boxShadow: "0 0 10px rgba(102, 230, 255, 0.7)",
+          transition: "width 120ms ease, height 120ms ease, background-color 120ms ease",
+        }}
       />
-      
-      {/* 4. Sub-circle for Target-Lock (Visible on button hover) */}
-      {isHovered && hoverType === "button" && (
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dotted border-[#9d4edd] w-[32px] h-[32px] animate-[spin_6s_linear_infinite_reverse]"
-        />
-      )}
     </div>
   );
 };
