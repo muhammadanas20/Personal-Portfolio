@@ -12,7 +12,6 @@ import { Contact } from "@/sections/contact";
 import { Footer } from "@/lay/footer";
 import ClickSpark from "@/components/clickspark";
 import { CreativeCursor } from "@/components/creative-cursor";
-import { AnasMascot } from "@/components/anas-mascot";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
