@@ -45,9 +45,15 @@ export const Navbar = () => {
 
         <a
           href="#"
-          className="text-xl font-bold tracking-tight hover:text-[#9d4edd] transition-colors select-none flex items-center gap-2"
+          className="text-xl font-bold tracking-tight hover:text-[#9d4edd] transition-colors select-none flex items-center gap-2.5"
         >
-          <span className={`w-2.5 h-2.5 rounded-full led-indicator led-purple ${isScrolled ? "active" : ""}`} />
+          <img
+            src="/icon.png"
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7 rounded-lg border border-white/10 shadow-[0_0_16px_rgba(0,217,255,0.25)]"
+          />
           ANAS<span className="text-[#9d4edd]">_</span>
         </a>
         {/* Desktop Menu */}
