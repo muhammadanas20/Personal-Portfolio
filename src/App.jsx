@@ -31,7 +31,6 @@ const App = () => {
             duration={500}
           >
             <CreativeCursor />
-            <AnasMascot />
             <Navbar />
             <main>
               <Hero />
