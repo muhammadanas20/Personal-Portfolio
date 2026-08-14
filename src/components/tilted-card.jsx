@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion as Motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 export const TiltedCard = ({ children, className = "", style = {} }) => {
   const x = useMotionValue(0);
@@ -38,7 +38,7 @@ export const TiltedCard = ({ children, className = "", style = {} }) => {
   };
 
   return (
-    <motion.div
+    <Motion.div
       className={`relative select-none ${className}`}
       style={{
         ...style,
@@ -52,7 +52,7 @@ export const TiltedCard = ({ children, className = "", style = {} }) => {
       onMouseLeave={handleMouseLeave}
     >
       {/* Glare effect */}
-      <motion.div
+      <Motion.div
         className="absolute inset-0 pointer-events-none rounded-[inherit] z-20 transition-opacity duration-300"
         style={{
           opacity: isHovered ? 0.12 : 0,
@@ -72,6 +72,6 @@ export const TiltedCard = ({ children, className = "", style = {} }) => {
       >
         {children}
       </div>
-    </motion.div>
+    </Motion.div>
   );
 };
