@@ -456,68 +456,263 @@
     100% { transform: translateY(100%); }
   }
 
-  /* Scramble Loaders */
-  .loader-scramble-booting,
-  .loader-scramble-decrypting,
-  .loader-scramble-compiling,
-  .loader-scramble-launching {
-    width: fit-content;
-    font-weight: bold;
-    font-family: monospace;
-    white-space: pre;
-    font-size: 24px;
-    line-height: 1.2em;
-    height: 1.2em;
+  /* Modern portfolio preloader */
+  .portfolio-loader {
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(22, 33, 63, 0.72), transparent 42%),
+      linear-gradient(145deg, #050711 0%, #090d19 52%, #060812 100%);
+  }
+
+  .loader-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(circle at center, black 8%, transparent 72%);
+    mask-image: radial-gradient(circle at center, black 8%, transparent 72%);
+    opacity: 0.5;
+  }
+
+  .loader-vignette {
+    background:
+      linear-gradient(115deg, rgba(5, 7, 17, 0.92), transparent 34%, transparent 66%, rgba(5, 7, 17, 0.9)),
+      radial-gradient(circle at center, transparent 25%, rgba(3, 5, 12, 0.6) 100%);
+  }
+
+  .loader-aurora {
+    position: absolute;
+    width: min(48vw, 700px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.2;
+    will-change: transform;
+    animation: loader-aurora-drift 7s ease-in-out infinite alternate;
+  }
+
+  .loader-aurora-purple {
+    top: -24%;
+    left: 6%;
+    background: #8b3dff;
+  }
+
+  .loader-aurora-cyan {
+    right: 2%;
+    bottom: -35%;
+    background: #00d9ff;
+    animation-direction: alternate-reverse;
+    animation-duration: 8s;
+  }
+
+  .loader-wordmark {
+    user-select: none;
+    color: transparent;
+    font-family: "Inter", sans-serif;
+    font-size: clamp(4.5rem, 16vw, 15rem);
+    font-weight: 800;
+    letter-spacing: -0.065em;
+    line-height: 1;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.035);
+    opacity: 0.8;
+  }
+
+  .loader-mini-mark,
+  .loader-core,
+  .loader-progress-panel,
+  .loader-enter-button {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 18px 55px rgba(0, 0, 0, 0.22);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+
+  .loader-mini-mark {
+    color: #e8faff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.13),
+      0 0 32px rgba(0, 217, 255, 0.08);
+  }
+
+  .loader-orbit {
+    filter: drop-shadow(0 0 24px rgba(102, 230, 255, 0.11));
+  }
+
+  .loader-orbit-line {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .loader-orbit-line-one::before,
+  .loader-orbit-line-two::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #66e6ff;
+    box-shadow: 0 0 14px 3px rgba(102, 230, 255, 0.52);
+  }
+
+  .loader-orbit-line-one::before {
+    left: -3px;
+  }
+
+  .loader-orbit-line-two::before {
+    right: -3px;
+    background: #b778ff;
+    box-shadow: 0 0 14px 3px rgba(183, 120, 255, 0.48);
+  }
+
+  .loader-orbit-line-one {
+    animation: loader-spin 5.5s linear infinite;
+  }
+
+  .loader-orbit-line-two {
+    animation: loader-spin 4s linear infinite reverse;
+  }
+
+  .loader-orbit-sweep {
+    background: conic-gradient(
+      from 60deg,
+      transparent 0deg,
+      transparent 285deg,
+      rgba(102, 230, 255, 0.8) 330deg,
+      transparent 360deg
+    );
+    -webkit-mask-image: radial-gradient(transparent 66%, black 67%, black 69%, transparent 70%);
+    mask-image: radial-gradient(transparent 66%, black 67%, black 69%, transparent 70%);
+    animation: loader-spin 2.2s linear infinite;
+    opacity: 0.75;
+  }
+
+  .loader-core {
     overflow: hidden;
+    color: white;
+    text-shadow: 0 0 22px rgba(102, 230, 255, 0.28);
   }
 
-  .loader-scramble-booting {
-    color: #00d9ff;
-    text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+  .loader-core-glint {
+    background: linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.13) 45%,
+      transparent 68%
+    );
+    transform: translateX(-130%);
+    animation: loader-glint 2.3s ease-in-out infinite;
   }
-  .loader-scramble-booting::before {
-    content: "BOOTING...\AooBtiNG...\AOiTgNbo...\AToGiBno...\ABiToNgo...\Abooting...";
-    white-space: pre;
+
+  .loader-progress-panel {
+    background: rgba(9, 14, 27, 0.58);
+  }
+
+  .loader-progress-track {
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  }
+
+  .loader-progress-fill {
+    min-width: 5px;
+    overflow: hidden;
+    background: linear-gradient(90deg, #8b3dff 0%, #9a6cff 45%, #66e6ff 100%);
+    box-shadow: 0 0 18px rgba(102, 230, 255, 0.32);
+    transition: width 100ms linear;
+  }
+
+  .loader-progress-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    transform: translateX(-100%);
+    animation: loader-progress-shine 1.25s ease-in-out infinite;
+  }
+
+  .loader-phase-dot {
+    background: rgba(255, 255, 255, 0.13);
+    transition: background-color 250ms ease, box-shadow 250ms ease, transform 250ms ease;
+  }
+
+  .loader-phase-dot.is-active {
+    background: #66e6ff;
+    box-shadow: 0 0 9px rgba(102, 230, 255, 0.8);
+    transform: scale(1.35);
+  }
+
+  .loader-enter-button {
+    background: rgba(255, 255, 255, 0.035);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .loader-enter-button:hover {
+    border-color: rgba(102, 230, 255, 0.35);
+    background: rgba(102, 230, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 10px 32px rgba(0, 217, 255, 0.08);
+  }
+
+  .loader-ellipsis {
     display: inline-block;
-    animation: l38-scramble 1.2s infinite steps(6);
+    width: 1.2em;
+    overflow: hidden;
+    vertical-align: bottom;
+    animation: loader-ellipsis 1.1s steps(4, end) infinite;
   }
 
-  .loader-scramble-decrypting {
-    color: #9d4edd;
-    text-shadow: 0 0 10px rgba(157, 78, 221, 0.8);
-  }
-  .loader-scramble-decrypting::before {
-    content: "DECRYPTING...\AeryCpiDtng...\ArpycDetgni...\AitypCerdgn...\AcrypDetgni...\Adecrypting...";
-    white-space: pre;
-    display: inline-block;
-    animation: l38-scramble 1.2s infinite steps(6);
+  @keyframes loader-spin {
+    to { transform: rotate(360deg); }
   }
 
-  .loader-scramble-compiling {
-    color: #25d366;
-    text-shadow: 0 0 10px rgba(37, 211, 102, 0.8);
-  }
-  .loader-scramble-compiling::before {
-    content: "COMPILING...\AomCipilng...\AplioCmgni...\AlipmoCgni...\AilipmoCgn...\Acompiling...";
-    white-space: pre;
-    display: inline-block;
-    animation: l38-scramble 1.2s infinite steps(6);
+  @keyframes loader-glint {
+    0%, 30% { transform: translateX(-130%); }
+    75%, 100% { transform: translateX(130%); }
   }
 
-  .loader-scramble-launching {
-    color: #f4a261;
-    text-shadow: 0 0 10px rgba(244, 162, 97, 0.8);
-  }
-  .loader-scramble-launching::before {
-    content: "LAUNCHING...\AauLncnhig...\AhcnuaLgni...\AlcnuaHing...\AgniHcnaul...\Alaunching...";
-    white-space: pre;
-    display: inline-block;
-    animation: l38-scramble 1.2s infinite steps(6);
+  @keyframes loader-progress-shine {
+    0% { transform: translateX(-100%); }
+    65%, 100% { transform: translateX(170%); }
   }
 
-  @keyframes l38-scramble {
-    100% { transform: translateY(-100%); }
+  @keyframes loader-ellipsis {
+    from { width: 0; }
+    to { width: 1.2em; }
   }
+
+  @keyframes loader-aurora-drift {
+    0% { transform: translate3d(-5%, -3%, 0) scale(0.92); }
+    100% { transform: translate3d(10%, 8%, 0) scale(1.08); }
+  }
+
+  @media (max-height: 650px) {
+    .loader-orbit {
+      width: 5rem;
+      height: 5rem;
+      margin-bottom: 1rem;
+    }
+
+    .loader-core {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loader-aurora,
+    .loader-orbit-line-one,
+    .loader-orbit-line-two,
+    .loader-orbit-sweep,
+    .loader-core-glint,
+    .loader-progress-fill::after,
+    .loader-ellipsis {
+      animation: none;
+    }
+  }
+
 }
 
 
