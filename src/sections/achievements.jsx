@@ -35,7 +35,7 @@ const achievements = [
     date: "May 2026",
     description:
       "Competed in the competitive programming track, solving complex algorithmic problems using C++, Data Structures, and logic optimization under tight time constraints.",
-    image: "/achievements/dev_day_2026.png",
+    image: "/achievements/dev_day_2026.jpg",
     tags: ["Data Structures", "Algorithms", "Problem Solving"],
     color: "#00d9ff", // cyan
     badgeText: "PARTICIPANT",
@@ -45,6 +45,27 @@ const achievements = [
 
 export const Achievements = () => {
   const [selectedCert, setSelectedCert] = useState(null);
+
+  useEffect(() => {
+    achievements.forEach((ach) => {
+      const img = new Image();
+      img.src = ach.image;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCert) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => {
+      if (e.key === "Escape") setSelectedCert(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [selectedCert]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -191,9 +212,15 @@ export const Achievements = () => {
 
       {/* CRT Diagnostic Screen Lightbox Modal */}
       {selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-modal-in"
+          onClick={() => setSelectedCert(null)}
+        >
           {/* Outer Console Shell */}
-          <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col skeuo-panel-glow border border-[#9d4edd]/40 p-5 md:p-6 bg-[#0c0e18] shadow-[0_0_50px_rgba(157,78,221,0.2)] overflow-y-auto">
+          <div
+            className="relative w-full max-w-4xl max-h-[92vh] flex flex-col skeuo-panel-glow border border-[#9d4edd]/40 p-5 md:p-6 bg-[#0c0e18] shadow-[0_0_50px_rgba(157,78,221,0.2)] overflow-y-auto animate-modal-panel-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             
             {/* Console Frame detailing */}
             <div className="absolute top-3 left-4 flex items-center gap-2">
