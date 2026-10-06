@@ -4,6 +4,19 @@
 // swings, hangs, crawls walls, reacts to the cursor, and shows moods.
 // Adapted from HyperTab's architecture into a single self-contained
 // React component. Pure HTML5 Canvas 2D — zero external dependencies.
+//
+// Synced with HyperTab's recent spider rebuild:
+//   • anatomy + gait model (stature-normalised proportions, muscle-girth
+//     capsule meshes, stance/swing foot planting with ankle pitch,
+//     contralateral arm swing, run flight phase)
+//   • matrix-hierarchy rig (row-major 3×3 affine stack: body × spine ×
+//     shoulders × wrists × head, inverse transforms for cursor aiming)
+//   • reach-safe IK with depth-projected bend poles
+//   • articulated hands (finger curls, spread, wrists) + new gestures
+//   • shared attachment geometry — webs meet the rendered hand/ankles
+//   • double-click "thwip" aiming from the actual wrist
+//   • dragline silk rendering (thins under tension, sags when slack)
+//   • ground contact shadows, reduced-motion companion
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef } from "react";
@@ -40,27 +53,27 @@ function rgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function shade(hex, k) {
+/** '#rrggbb' → rgb() with a multiplicative shade and optional white lift. */
+const color = (hex, factor, white = 0) => {
   const n = parseInt(hex.slice(1), 16);
-  const r = Math.round(((n >> 16) & 255) * k);
-  const g = Math.round(((n >> 8) & 255) * k);
-  const b = Math.round((n & 255) * k);
-  return `rgb(${r},${g},${b})`;
-}
+  return `rgb(${[(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    .map((v) => Math.round(clamp(v * factor + (255 - v) * white, 0, 255)))
+    .join(",")})`;
+};
 
 // ─── Brain (Mood + Behavior) ─────────────────────────────────────────
 const MOOD_TABLES = {
   chill: [
     ["climbString", 30], ["swing", 22], ["walk", 16], ["hop", 14], ["hang", 12],
-    ["crawlWall", 12], ["run", 10], ["peek", 8], ["wave", 6],
+    ["crawlWall", 12], ["run", 10], ["peek", 8], ["wave", 6], ["salute", 4],
   ],
   playful: [
     ["climbString", 36], ["swing", 28], ["run", 20], ["hop", 20], ["crawlWall", 12],
-    ["hang", 10], ["peek", 8], ["wave", 6], ["walk", 6],
+    ["hang", 10], ["peek", 8], ["wave", 6], ["walk", 6], ["salute", 5],
   ],
   sleepy: [
-    ["climbString", 20], ["walk", 18], ["swing", 16], ["hang", 14], ["crawlWall", 10],
-    ["hop", 8], ["crouch", 8], ["idle", 8], ["peek", 6],
+    ["climbString", 20], ["walk", 18], ["swing", 16], ["hang", 14],
+    ["crawlWall", 10], ["hop", 8], ["crouch", 8], ["idle", 8], ["peek", 6],
   ],
   alert: [
     ["climbString", 34], ["swing", 24], ["run", 20], ["hop", 16], ["crouch", 12],
@@ -101,96 +114,426 @@ class Brain {
   }
 }
 
+// ─── Matrix math (row-major 3×3 affine) ─────────────────────────────
+// Column vectors, parent × local. Canvas uses the same affine transform
+// but a different argument order, hence apply().
+const IDENTITY = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+const translate = (x, y) => [1, 0, x, 0, 1, y, 0, 0, 1];
+const scale = (x, y = x) => [x, 0, 0, 0, y, 0, 0, 0, 1];
+const rotate = (r) => {
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return [c, -s, 0, s, c, 0, 0, 0, 1];
+};
+function multiply(a, b) {
+  return [
+    a[0] * b[0] + a[1] * b[3],
+    a[0] * b[1] + a[1] * b[4],
+    a[0] * b[2] + a[1] * b[5] + a[2],
+    a[3] * b[0] + a[4] * b[3],
+    a[3] * b[1] + a[4] * b[4],
+    a[3] * b[2] + a[4] * b[5] + a[5],
+    0,
+    0,
+    1,
+  ];
+}
+const compose = (...ms) => ms.reduce(multiply, IDENTITY);
+const transform = (m, p) => [
+  m[0] * p[0] + m[1] * p[1] + m[2],
+  m[3] * p[0] + m[4] * p[1] + m[5],
+];
+function inverse(m) {
+  const d = m[0] * m[4] - m[1] * m[3];
+  if (Math.abs(d) < 1e-12) throw new RangeError("Singular rig transform");
+  return [
+    m[4] / d,
+    -m[1] / d,
+    (m[1] * m[5] - m[4] * m[2]) / d,
+    -m[3] / d,
+    m[0] / d,
+    (m[3] * m[2] - m[0] * m[5]) / d,
+    0,
+    0,
+    1,
+  ];
+}
+function apply(ctx, m) {
+  ctx.transform(m[0], m[3], m[1], m[4], m[2], m[5]);
+}
+
+// ─── Anatomy — stature-normalised proportions + gait ─────────────────
+// 7.2-head athletic silhouette, tapered muscle profiles and gait targets.
+// Art-directed proportions, not a medical anthropometric model.
+// Coordinates: crown = 0, sole = 1, +y down.
+const HEADS = 7.2;
+const HEAD_H = 1 / HEADS;
+
+/** Vertical landmarks, fraction of stature from the crown (y down). */
+const LANDMARK = {
+  crown: 0,
+  chin: HEAD_H,
+  brow: HEAD_H * 0.52,
+  c7: HEAD_H + 0.048,
+  acromion: 0.228,
+  nipple: 0.352,
+  navel: 0.452,
+  crotch: 0.528,
+  hip: 0.51,
+  knee: 0.75,
+  calf: 0.842,
+  ankle: 0.956,
+  sole: 1,
+  elbow: 0.412,
+  wrist: 0.577,
+  fingertip: 0.694,
+};
+
+/** Half-widths (x), fraction of stature. */
+const WIDTH = {
+  head: 0.055,
+  neck: 0.030,
+  acromion: 0.108,
+  deltoid: 0.126,
+  chest: 0.116,
+  waist: 0.072,
+  trochanter: 0.068,
+  hipMass: 0.088,
+};
+
+/** Head box (the mask lives in it). */
+const HEAD = {
+  cx: 0,
+  cy: HEAD_H * 0.5,
+  rx: WIDTH.head,
+  ry: HEAD_H * 0.5,
+};
+
+/* Girth profiles — radius (half thickness) at t along each bone. */
+const ARM_GIRTH = [
+  { t: 0.0, r: 0.036 },
+  { t: 0.2, r: 0.034 },
+  { t: 0.42, r: 0.03 },
+  { t: 0.78, r: 0.0225 },
+  { t: 1.0, r: 0.0205 },
+];
+const FOREARM_GIRTH = [
+  { t: 0.0, r: 0.0215 },
+  { t: 0.22, r: 0.0235 },
+  { t: 0.6, r: 0.0175 },
+  { t: 1.0, r: 0.0128 },
+];
+const THIGH_GIRTH = [
+  { t: 0.0, r: 0.047 },
+  { t: 0.35, r: 0.045 },
+  { t: 0.7, r: 0.0325 },
+  { t: 1.0, r: 0.0262 },
+];
+const SHANK_GIRTH = [
+  { t: 0.0, r: 0.03 },
+  { t: 0.24, r: 0.0302 },
+  { t: 0.62, r: 0.0205 },
+  { t: 1.0, r: 0.0138 },
+];
+
+function sampleGirth(stops, t) {
+  const x = clamp(t, 0, 1);
+  for (let i = 1; i < stops.length; i++) {
+    if (x <= stops[i].t) {
+      const a = stops[i - 1];
+      const b = stops[i];
+      const u = (x - a.t) / (b.t - a.t || 1);
+      // smooth (cosine) interpolation so muscle bellies read as volumes
+      return lerp(a.r, b.r, 0.5 - 0.5 * Math.cos(Math.PI * u));
+    }
+  }
+  return stops[stops.length - 1].r;
+}
+
+const smooth = (t) => t * t * (3 - 2 * t);
+
+/**
+ * One foot's cycle. u ∈ [0,1): stance 0→0.6 (planted, sweeps backwards
+ * under the body), swing 0.6→1 (lifts, advances, reaches for heel strike).
+ * Returns position in body space plus the ankle pitch curve.
+ */
+function footCycle(u, stride, lift, run) {
+  const s = stride * 0.5;
+  if (u < 0.6) {
+    /* stance: foot locked to the ground → travels backwards linearly,
+       with a heel-roll at contact and a plantarflexing push-off. The sweep
+       is biased behind the hip so the leg never exceeds its reach. */
+    const k = u / 0.6;
+    const x = lerp(s * 0.75, -s * 1.05, k);
+    const y =
+      0.994 -
+      Math.max(0, 0.02 - k * 0.1) * 0.35 -
+      (k > 0.42 ? (k - 0.42) * 0.055 * run + (k - 0.42) * 0.02 : 0);
+    let ang;
+    if (k < 0.1) ang = lerp(-0.22, 0, smooth(k / 0.1)); // heel strike → flat
+    else if (k < 0.42) ang = lerp(0, 0.06, (k - 0.1) / 0.32); // ankle rocker
+    else ang = lerp(0.06, 0.34 + 0.2 * run, smooth((k - 0.42) / 0.58)); // push-off
+    return { p: [x, y], ang };
+  }
+  /* swing: toe-off → heel kick (run) → knee-forward reach → heel strike */
+  const w = (u - 0.6) / 0.4;
+  const back = -s * 1.05;
+  const fwd = s * 0.75;
+  const x = lerp(back, fwd, smooth(clamp((w - 0.18) / 0.78, 0, 1)));
+  const kick = run * 0.055 * Math.sin(Math.PI * clamp(w / 0.55, 0, 1));
+  const clear = lift * Math.sin(Math.PI * clamp(w, 0, 1)) ** 1.25;
+  const y = 0.994 - clear - kick;
+  let ang;
+  if (w < 0.3) ang = lerp(0.34 + 0.2 * run, -0.05, smooth(w / 0.3));
+  else ang = lerp(-0.05, -0.2, smooth((w - 0.3) / 0.7));
+  return { p: [x, y], ang };
+}
+
+/**
+ * Full-body gait frame for a stride phase (radians; one TAU = one stride,
+ * i.e. two steps). `run` blends walk → sprint kinematics.
+ */
+function gaitFrame(phase, run) {
+  const r = clamp(run, 0, 1);
+  const u = ((phase / TAU) % 1 + 1) % 1;
+
+  const stride = lerp(0.3, 0.46, r);
+  const lift = lerp(0.052, 0.105, r);
+
+  const L = footCycle(u, stride, lift, r);
+  const R = footCycle((u + 0.5) % 1, stride, lift, r);
+
+  /* vertical bounce: CoM peaks at mid-stance of each leg (2× per stride) */
+  const bobAmp = lerp(0.0085, 0.016, r);
+  const bob = -bobAmp * Math.cos(TAU * 2 * (u - 0.3)) * 0.5 + bobAmp * 0.25;
+  /* flight phase for runs: both feet off the ground around u≈0.1 & 0.6 */
+  const flight = r > 0.35 ? Math.max(0, Math.sin(TAU * 2 * (u - 0.02))) * r * 0.5 : 0;
+
+  const lean = lerp(0.055, 0.3, r) + flight * 0.05;
+
+  /* trunk: pelvis carries the bounce, chest leans, head stays level
+     (vestibular stabilisation — the head bounces ~40% less than the pelvis) */
+  const pelvisOff = [0, bob - flight * 0.02];
+  const chestOff = [Math.sin(lean) * 0.055, -Math.cos(lean) * 0.02 + bob * 0.28];
+  const headOff = [Math.sin(lean) * 0.085, bob * 0.42 - 0.004];
+
+  /* contralateral arm swing; elbow flexes more as the hand trails */
+  const swingA = lerp(0.105, 0.17, r);
+  const armY = lerp(0.575, 0.505, r);
+  const aL = Math.sin(TAU * (u + 0.5));
+  const aR = Math.sin(TAU * u);
+  const flexL = Math.max(0, -aL) * lerp(0.02, 0.075, r);
+  const flexR = Math.max(0, -aR) * lerp(0.02, 0.075, r);
+  const handL = [-0.02 + aL * swingA, armY - flexL - Math.abs(aL) * 0.012 * r];
+  const handR = [0.05 + aR * swingA, armY - flexR - Math.abs(aR) * 0.012 * r];
+
+  return {
+    footL: L.p, footR: R.p, footAngL: L.ang, footAngR: R.ang,
+    handL, handR, pelvisOff, chestOff, headOff, lean, flight,
+  };
+}
+
+const between = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+
 // ─── Pose Library ────────────────────────────────────────────────────
+// Pose targets in stature units. The spine/head are FK; contacts use IK.
+// Hand curls are thumb → little finger. Every channel is blendable.
+const HANDS = {
+  relaxed: [0.45, 0.4, 0.5, 0.55, 0.6],
+  fist: [0.95, 1, 1, 1, 1],
+  open: [0.05, 0, 0.05, 0.08, 0.12],
+  grip: [0.65, 0.75, 0.8, 0.85, 0.85],
+  thwip: [0.15, 0, 1, 1, 0.05],
+};
+
+const basePose = {
+  pelvis: [0, 0.51],
+  chest: [0.008, 0.228],
+  head: [0.02, 0.08],
+  handL: [-0.155, 0.55],
+  handR: [0.18, 0.54],
+  footL: [-0.095, 0.995],
+  footR: [0.12, 0.995],
+  kneeBend: 1,
+  elbowBend: -1,
+  curlL: HANDS.relaxed,
+  curlR: HANDS.relaxed,
+};
+const pose = (p) => ({ ...basePose, ...p });
+
 const POSES = {
-  stand: {
-    pelvis: [0, 0.52], chest: [0.02, 0.30], head: [0.06, 0.16],
-    handL: [-0.15, 0.56], handR: [0.17, 0.57],
-    footL: [-0.07, 0.985], footR: [0.11, 0.99],
-    kneeBend: 1, elbowBend: -1,
-  },
-  crouch: {
-    pelvis: [0, 0.66], chest: [0.08, 0.48], head: [0.13, 0.36],
-    handL: [-0.12, 0.62], handR: [0.24, 0.88],
-    footL: [-0.16, 0.985], footR: [0.17, 0.99],
-    kneeBend: 1, elbowBend: -1, tension: 1,
-  },
-  sit: {
-    pelvis: [0, 0.78], chest: [0.0, 0.56], head: [0.04, 0.43],
-    handL: [-0.1, 0.82], handR: [0.13, 0.83],
-    footL: [0.19, 0.965], footR: [0.12, 0.99],
-    kneeBend: 1, elbowBend: -1,
-  },
-  hang: {
-    pelvis: [0, 0.42], chest: [-0.02, 0.24], head: [-0.03, 0.11],
-    handL: [-0.13, 0.42], handR: [0.12, 0.44],
-    footL: [-0.04, 0.03], footR: [0.05, 0.035],
-    kneeBend: 1, elbowBend: -1,
-  },
-  swing: {
-    pelvis: [0, 0.5], chest: [-0.07, 0.31], head: [-0.06, 0.17],
-    handL: [0.02, 0.03], handR: [0.16, 0.015],
-    footL: [-0.26, 0.72], footR: [-0.1, 0.86],
-    kneeBend: -1, elbowBend: 1,
-  },
-  crawl: {
-    pelvis: [0, 0.5], chest: [0.02, 0.3], head: [0.05, 0.17],
-    handL: [-0.22, 0.3], handR: [0.26, 0.34],
-    footL: [-0.2, 0.86], footR: [0.2, 0.9],
-    kneeBend: -1, elbowBend: 1, tension: 0.6,
-  },
-  sleep: {
-    pelvis: [0, 0.8], chest: [0.1, 0.72], head: [0.17, 0.66],
-    handL: [0.16, 0.86], handR: [0.04, 0.9],
-    footL: [-0.1, 0.99], footR: [0.06, 0.995],
-    kneeBend: 1, elbowBend: -1,
-  },
-  watch: {
-    pelvis: [0, 0.52], chest: [0.02, 0.3], head: [0.08, 0.17],
-    handL: [0.12, 0.38], handR: [0.15, 0.55],
-    footL: [-0.07, 0.985], footR: [0.11, 0.99],
-    kneeBend: 1, elbowBend: -1,
-  },
-  wave: {
-    pelvis: [0, 0.52], chest: [0.02, 0.3], head: [0.06, 0.16],
-    handL: [-0.15, 0.56], handR: [0.22, 0.28],
-    footL: [-0.07, 0.985], footR: [0.11, 0.99],
-    kneeBend: 1, elbowBend: -1,
-  },
-  curious: {
-    pelvis: [0, 0.55], chest: [0.08, 0.33], head: [0.14, 0.21],
-    handL: [-0.13, 0.58], handR: [0.14, 0.38],
-    footL: [-0.08, 0.985], footR: [0.12, 0.99],
-    kneeBend: 1, elbowBend: -1,
-  },
-  airborne: {
-    pelvis: [0, 0.5], chest: [0, 0.29], head: [0.04, 0.15],
-    handL: [-0.24, 0.2], handR: [0.26, 0.18],
-    footL: [-0.13, 0.8], footR: [0.13, 0.85],
-    kneeBend: 1, elbowBend: -1,
-  },
-  land: {
-    pelvis: [0, 0.7], chest: [0.09, 0.52], head: [0.13, 0.4],
-    handL: [-0.14, 0.66], handR: [0.22, 0.94],
-    footL: [-0.18, 0.985], footR: [0.18, 0.99],
-    kneeBend: 1, elbowBend: -1, tension: 1,
-  },
-  dodge: {
-    pelvis: [0, 0.56], chest: [-0.06, 0.34], head: [-0.1, 0.2],
-    handL: [-0.28, 0.4], handR: [0.2, 0.5],
-    footL: [-0.14, 0.985], footR: [0.14, 0.99],
-    kneeBend: 1, elbowBend: -1, tension: 0.8,
-  },
-  point: {
-    pelvis: [0, 0.52], chest: [0.02, 0.3], head: [0.06, 0.16],
-    handL: [-0.15, 0.56], handR: [0.34, 0.3],
-    footL: [-0.07, 0.985], footR: [0.11, 0.99],
-    kneeBend: 1, elbowBend: -1, tension: 0.4,
-  },
+  stand: pose({}),
+  crouch: pose({
+    pelvis: [-0.025, 0.69],
+    chest: [0.13, 0.456],
+    head: [0.17, 0.32],
+    handL: [-0.21, 0.57],
+    handR: [0.24, 0.935],
+    footL: [-0.22, 0.99],
+    footR: [0.21, 0.99],
+    tension: 1,
+    curlL: HANDS.fist,
+    curlR: HANDS.open,
+    spreadR: 0.8,
+  }),
+  land: pose({
+    pelvis: [-0.04, 0.72],
+    chest: [0.14, 0.505],
+    head: [0.2, 0.37],
+    handL: [-0.26, 0.52],
+    handR: [0.26, 0.935],
+    footL: [-0.25, 0.99],
+    footR: [0.19, 0.99],
+    tension: 1,
+    curlL: HANDS.fist,
+    curlR: HANDS.open,
+    spreadR: 1,
+  }),
+  sit: pose({
+    pelvis: [-0.06, 0.8],
+    chest: [-0.04, 0.52],
+    head: [-0.02, 0.37],
+    handL: [-0.17, 0.82],
+    handR: [0.22, 0.72],
+    footL: [0.12, 0.98],
+    footR: [0.34, 0.96],
+  }),
+  // Whole-body rotation inverts an upright skeleton: ankles ABOVE head.
+  hang: pose({
+    pelvis: [0, 0.51],
+    chest: [-0.01, 0.228],
+    head: [-0.01, 0.08],
+    handL: [-0.16, 0.43],
+    handR: [0.15, 0.41],
+    footL: [-0.022, 0.965],
+    footR: [0.022, 0.965],
+    kneeBend: -1,
+    curlL: HANDS.grip,
+    curlR: HANDS.grip,
+  }),
+  swing: pose({
+    pelvis: [0.035, 0.5],
+    chest: [-0.045, 0.23],
+    head: [-0.05, 0.085],
+    handL: [0.06, -0.005],
+    handR: [0.08, -0.065],
+    footL: [-0.27, 0.73],
+    footR: [-0.04, 0.91],
+    kneeBend: -1,
+    elbowBend: 1,
+    curlL: HANDS.grip,
+    curlR: HANDS.grip,
+    wristL: -0.35,
+    wristR: 0.1,
+  }),
+  crawl: pose({
+    pelvis: [0, 0.54],
+    chest: [0.03, 0.26],
+    head: [0.04, 0.11],
+    handL: [-0.31, 0.13],
+    handR: [0.34, 0.4],
+    footL: [-0.3, 0.78],
+    footR: [0.31, 0.85],
+    kneeBend: -1,
+    elbowBend: 1,
+    tension: 0.7,
+    curlL: HANDS.open,
+    curlR: HANDS.open,
+    spreadL: 1,
+    spreadR: 1,
+  }),
+  sleep: pose({
+    pelvis: [-0.13, 0.83],
+    chest: [0.1, 0.67],
+    head: [0.2, 0.6],
+    handL: [0.24, 0.75],
+    handR: [0.22, 0.7],
+    footL: [-0.11, 0.99],
+    footR: [0.09, 0.98],
+  }),
+  hammock: pose({
+    pelvis: [0, 0.51],
+    chest: [0, 0.228],
+    head: [0.01, 0.08],
+    handL: [-0.055, 0.055],
+    handR: [0.08, 0.06],
+    footL: [-0.15, 0.94],
+    footR: [0.13, 0.96],
+    elbowBend: 1,
+  }),
+  watch: pose({
+    head: [0.065, 0.085],
+    handL: [0.1, 0.37],
+    handR: [0.14, 0.38],
+    elbowBend: 1,
+    curlL: HANDS.fist,
+    curlR: HANDS.thwip,
+  }),
+  wave: pose({
+    handR: [0.3, 0.055],
+    elbowBend: 1,
+    curlR: HANDS.open,
+    spreadR: 1,
+    wristR: -0.25,
+  }),
+  curious: pose({
+    pelvis: [-0.015, 0.52],
+    chest: [0.05, 0.246],
+    head: [0.12, 0.115],
+    handR: [0.1, 0.21],
+    elbowBend: 1,
+    curlR: HANDS.grip,
+  }),
+  airborne: pose({
+    pelvis: [0, 0.5],
+    chest: [0.03, 0.22],
+    head: [0.04, 0.075],
+    handL: [-0.3, 0.22],
+    handR: [0.34, 0.15],
+    footL: [-0.25, 0.77],
+    footR: [0.23, 0.84],
+    curlL: HANDS.open,
+    curlR: HANDS.thwip,
+    spreadL: 0.7,
+  }),
+  dodge: pose({
+    pelvis: [0, 0.59],
+    chest: [-0.12, 0.335],
+    head: [-0.14, 0.19],
+    handL: [-0.32, 0.39],
+    handR: [0.29, 0.44],
+    footL: [-0.18, 0.99],
+    footR: [0.19, 0.99],
+    tension: 0.8,
+    curlL: HANDS.open,
+    curlR: HANDS.open,
+  }),
+  point: pose({
+    chest: [0.035, 0.23],
+    head: [0.075, 0.09],
+    handL: [-0.16, 0.48],
+    handR: [0.43, 0.25],
+    footL: [-0.13, 0.99],
+    footR: [0.17, 0.99],
+    curlL: HANDS.fist,
+    curlR: HANDS.thwip,
+    spreadR: 0.8,
+    wristR: -0.12,
+    elbowBend: 1,
+  }),
+  salute: pose({
+    handR: [0.08, 0.055],
+    elbowBend: 1,
+    curlR: HANDS.open,
+    wristR: -0.65,
+  }),
 };
 
 function blendPose(a, b, t) {
-  const P = (ka, kb) => [lerp(ka[0], kb[0], t), lerp(ka[1], kb[1], t)];
+  const amt = clamp(t, 0, 1);
+  const P = (ka, kb) => [lerp(ka[0], kb[0], amt), lerp(ka[1], kb[1], amt)];
+  const fingers = (x = HANDS.relaxed, y = HANDS.relaxed) =>
+    x.map((v, i) => lerp(v, y[i], amt));
   return {
     pelvis: P(a.pelvis, b.pelvis),
     chest: P(a.chest, b.chest),
@@ -199,33 +542,156 @@ function blendPose(a, b, t) {
     handR: P(a.handR, b.handR),
     footL: P(a.footL, b.footL),
     footR: P(a.footR, b.footR),
-    kneeBend: t < 0.5 ? a.kneeBend : b.kneeBend,
-    elbowBend: t < 0.5 ? a.elbowBend : b.elbowBend,
-    tension: lerp(a.tension ?? 0, b.tension ?? 0, t),
+    // Continuous poles pass through extension, rather than snapping branches
+    // or permanently keeping the old sign during exponential interpolation.
+    kneeBend: lerp(a.kneeBend, b.kneeBend, amt),
+    elbowBend: lerp(a.elbowBend, b.elbowBend, amt),
+    tension: lerp(a.tension ?? 0, b.tension ?? 0, amt),
+    curlL: fingers(a.curlL, b.curlL),
+    curlR: fingers(a.curlR, b.curlR),
+    spreadL: lerp(a.spreadL ?? 0.2, b.spreadL ?? 0.2, amt),
+    spreadR: lerp(a.spreadR ?? 0.2, b.spreadR ?? 0.2, amt),
+    wristL: lerp(a.wristL ?? 0, b.wristL ?? 0, amt),
+    wristR: lerp(a.wristR ?? 0, b.wristR ?? 0, amt),
   };
 }
 
-// ─── Two-Bone IK ─────────────────────────────────────────────────────
-const UPPER_ARM = 0.17;
-const FOREARM = 0.17;
-const THIGH = 0.21;
-const SHIN = 0.22;
+// ─── Skeleton (kinematics) ───────────────────────────────────────────
+// Transform hierarchy: screen × body × spine × shoulder; wrist × fingers.
+// A bend pole rotates through depth when changing sides, so projected
+// bones can foreshorten but can never stretch. No pose owns a different
+// bone length.
+const BONES = {
+  upperArm: 0.184,
+  forearm: 0.165,
+  thigh: 0.24,
+  shin: 0.206,
+  spine: 0.282,
+  neckHead: 0.137,
+};
 
-function twoBone(ax, ay, tx, ty, l1, l2, bend) {
-  let dx = tx - ax;
-  let dy = ty - ay;
-  let d = Math.hypot(dx, dy);
-  const min = Math.abs(l1 - l2) + 1e-4;
-  const max = l1 + l2 - 1e-4;
-  d = clamp(d, min, max);
-  const ux = dx / (Math.hypot(dx, dy) || 1);
-  const uy = dy / (Math.hypot(dx, dy) || 1);
-  dx = ux * d;
-  dy = uy * d;
-  const a1 = Math.acos(clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1));
-  const base = Math.atan2(dy, dx);
-  const ang = base + a1 * bend;
-  return [ax + Math.cos(ang) * l1, ay + Math.sin(ang) * l1];
+function solveIK(root, target, l1, l2, pole) {
+  const dx = target[0] - root[0];
+  const dy = target[1] - root[1];
+  const r = Math.hypot(dx, dy);
+  const ux = r > 1e-8 ? dx / r : 0;
+  const uy = r > 1e-8 ? dy / r : 1;
+  const d = clamp(r, Math.abs(l1 - l2) + 1e-6, l1 + l2 - 1e-6);
+  const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+  const phi = ((1 - clamp(pole, -1, 1)) * Math.PI) / 2;
+  const side = h * Math.cos(phi);
+  return {
+    root,
+    joint: [root[0] + ux * a - uy * side, root[1] + uy * a + ux * side],
+    end: [root[0] + ux * d, root[1] + uy * d],
+    depth: h * Math.sin(phi),
+  };
+}
+
+/** Local +y follows a bone. */
+const boneFrame = (a, b) =>
+  compose(
+    translate(...a),
+    rotate(Math.atan2(b[1] - a[1], b[0] - a[0]) - Math.PI / 2),
+  );
+
+function bodyMatrix(s) {
+  const q = clamp(s.squash, 0.65, 1.25);
+  return compose(
+    translate(s.x, s.y),
+    rotate(s.rotation),
+    scale(s.facing * s.size * (1 + (1 - q) * 0.3), s.size * q),
+  );
+}
+
+function solveSkeleton(s) {
+  const p = s.pose;
+  const g = s.walkPhase >= 0 ? gaitFrame(s.walkPhase, s.run ?? 0) : null;
+  const breath = Math.sin(s.breathe * Math.PI * 0.56) * 0.0025;
+  const pelvis = [p.pelvis[0], p.pelvis[1] + (g?.pelvisOff[1] ?? 0)];
+  const desiredChest = [
+    p.chest[0] + (g ? Math.sin(g.lean) * 0.12 : 0),
+    p.chest[1] - breath,
+  ];
+  const spineAngle =
+    Math.atan2(pelvis[1] - desiredChest[1], pelvis[0] - desiredChest[0]) -
+    Math.PI / 2;
+  const spine = compose(translate(...pelvis), rotate(spineAngle));
+  const chest = transform(spine, [0, -BONES.spine]);
+  const torso = compose(spine, translate(0, -BONES.spine));
+  const desiredHead = [
+    p.head[0] + (g ? Math.sin(g.lean) * 0.08 : 0),
+    p.head[1],
+  ];
+  const hd = Math.atan2(desiredHead[1] - chest[1], desiredHead[0] - chest[0]);
+  const head = [
+    chest[0] + Math.cos(hd) * BONES.neckHead,
+    chest[1] + Math.sin(hd) * BONES.neckHead,
+  ];
+  const headFrame = compose(
+    translate(...head),
+    rotate(s.headTilt + s.lookX * 0.065),
+  );
+  const armL = solveIK(
+    transform(torso, [-0.104, 0.006]),
+    g?.handL ?? p.handL,
+    BONES.upperArm,
+    BONES.forearm,
+    -p.elbowBend,
+  );
+  const armR = solveIK(
+    transform(torso, [0.104, 0.006]),
+    g?.handR ?? p.handR,
+    BONES.upperArm,
+    BONES.forearm,
+    p.elbowBend,
+  );
+  const footL = g?.footL ?? p.footL;
+  const footR = g?.footR ?? p.footR;
+  const ankle = (f) => [f[0], f[1] - 0.037];
+  const legL = solveIK(
+    transform(spine, [-0.06, 0]),
+    ankle(footL),
+    BONES.thigh,
+    BONES.shin,
+    g ? -1 : p.kneeBend,
+  );
+  const legR = solveIK(
+    transform(spine, [0.06, 0]),
+    ankle(footR),
+    BONES.thigh,
+    BONES.shin,
+    g ? -1 : -p.kneeBend,
+  );
+  const world = bodyMatrix(s);
+  const wristFrame = (a, offset) =>
+    compose(
+      boneFrame(a.joint, a.end),
+      translate(0, Math.hypot(a.end[0] - a.joint[0], a.end[1] - a.joint[1])),
+      rotate(offset),
+    );
+  const wristL = wristFrame(armL, p.wristL ?? 0);
+  const wristR = wristFrame(armR, p.wristR ?? 0);
+  return {
+    world,
+    torso,
+    spine,
+    headFrame,
+    head,
+    chest,
+    pelvis,
+    armL,
+    armR,
+    legL,
+    legR,
+    wristL,
+    wristR,
+    footAngL: g?.footAngL ?? 0,
+    footAngR: g?.footAngR ?? 0,
+    webHand: transform(compose(world, wristR), [0, 0.025]),
+    webAnkle: transform(world, between(legL.end, legR.end, 0.5)),
+  };
 }
 
 // ─── Swing Rope (Verlet Pendulum) ────────────────────────────────────
@@ -312,19 +778,27 @@ class SwingRope {
     if (this.attached && this.shootT > 0) {
       const ex = this.anchor.x + (this.x - this.anchor.x) * this.shootT;
       const ey = this.anchor.y + (this.y - this.anchor.y) * this.shootT;
-      const sag = 8 * (1 - this.shootT);
+      /* Silk mechanics (dragline: ~10 GPa initial modulus, yield at ~2–5%
+         strain): a loaded strand is effectively inextensible and thins as
+         tension rises, while a slack strand sags into a catenary. */
+      const cur = Math.hypot(this.x - this.anchor.x, this.y - this.anchor.y);
+      const slack = clamp((this.naturalLength - cur) / this.naturalLength, 0, 1);
+      const strain = clamp((cur - this.naturalLength) / this.naturalLength, 0, 0.3);
+      const sag = (8 + slack * 110) * (1 - this.shootT * 0.5);
+      const core = 1.7 - strain * 2.2;
+      // bright core + accent glow
       ctx.shadowColor = accent;
       ctx.shadowBlur = 8;
-      ctx.strokeStyle = rgba(accent, 0.35);
-      ctx.lineWidth = 3.2;
+      ctx.strokeStyle = rgba(accent, 0.22);
+      ctx.lineWidth = core + 2.1;
       ctx.beginPath();
       ctx.moveTo(this.anchor.x, this.anchor.y);
       ctx.quadraticCurveTo((this.anchor.x + ex) / 2, (this.anchor.y + ey) / 2 + sag, ex, ey);
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      ctx.strokeStyle = "rgba(240,250,255,0.95)";
-      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = "rgba(240,244,255,0.95)";
+      ctx.lineWidth = Math.max(0.8, core);
       ctx.beginPath();
       ctx.moveTo(this.anchor.x, this.anchor.y);
       ctx.quadraticCurveTo((this.anchor.x + ex) / 2, (this.anchor.y + ey) / 2 + sag, ex, ey);
@@ -391,377 +865,462 @@ class WebEffects {
   }
 }
 
-// ─── Draw Humanoid Spider ────────────────────────────────────────────
-function drawSpider(ctx, s) {
-  const sz = s.size;
+// ─── Cinematic vector rig ────────────────────────────────────────────
+// Local anatomical meshes are lit, layered and posed by the matrix
+// skeleton. Illustrated movie-inspired suit — no sprites or remote models.
+const INK = "#09101c";
+const PATHS = new Map();
+
+function drawSpider(ctx, s, solved) {
+  if (s.alpha <= 0 || s.size <= 0) return;
+  const k = solved ?? solveSkeleton(s);
   const pal = s.palette;
-  const pose = s.pose;
-  const ink = shade(pal.blue, 0.24);
-
+  const detail = s.quality > 0.5;
+  const micro = detail && s.size > 180;
   ctx.save();
-  ctx.translate(s.x, s.y);
-  ctx.rotate(s.rotation);
-  const stretchX = 1 + (1 - s.squash) * 0.72;
-  ctx.scale(s.facing * sz * stretchX, sz * s.squash);
-  ctx.globalAlpha = s.alpha;
-
+  apply(ctx, k.world);
+  ctx.globalAlpha *= s.alpha;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   if (s.hidden !== "none") {
     ctx.beginPath();
-    if (s.hidden === "left") ctx.rect(-0.2, -0.6, 0.75, 2);
-    else if (s.hidden === "right") ctx.rect(-0.55, -0.6, 0.75, 2);
-    else ctx.rect(-0.6, -0.25, 1.6, 0.7);
+    if (s.hidden === "left") ctx.rect(-0.2, -1, 1, 3);
+    else if (s.hidden === "right") ctx.rect(-0.8, -1, 1, 3);
+    else ctx.rect(-1, -0.25, 2, 1.5);
     ctx.clip();
   }
-
-  // Breathing + physics-driven walk cycle
-  const breathe = Math.sin(s.breathe * TAU * 0.28) * 0.008;
-  let chestOff = breathe;
-  let bodyBob = 0;
-  let feet = { L: pose.footL, R: pose.footR };
-  let hands = { L: pose.handL, R: pose.handR };
-
-  if (s.walkPhase >= 0) {
-    const ph = s.walkPhase;
-    const stride = 0.16;
-    const lift = 0.09;
-    
-    // Natural stance & swing phase
-    const swingL = Math.sin(ph);
-    const swingR = Math.sin(ph + Math.PI);
-    
-    const footLX = -0.035 + swingL * stride;
-    const footLY = 0.985 - Math.max(0, swingL) * lift;
-    
-    const footRX = -0.035 + swingR * stride;
-    const footRY = 0.985 - Math.max(0, swingR) * lift;
-
-    feet = {
-      L: [footLX, footLY],
-      R: [footRX, footRY],
-    };
-    
-    // Arms swing opposite to legs
-    hands = {
-      L: [-0.14 - Math.cos(ph) * 0.12, 0.52 + Math.abs(Math.sin(ph)) * 0.04],
-      R: [0.14 + Math.cos(ph) * 0.12, 0.52 + Math.abs(Math.sin(ph + Math.PI)) * 0.04],
-    };
-    
-    bodyBob = -Math.abs(Math.sin(ph * 2)) * 0.016;
-    chestOff += 0.02 + Math.abs(Math.sin(ph)) * 0.01;
-  }
-
-  const pelvis = [pose.pelvis[0], pose.pelvis[1] + bodyBob];
-  const chest = [pose.chest[0], pose.chest[1] - chestOff + bodyBob * 0.72];
-  const head = [
-    pose.head[0] + Math.sin(s.headTilt) * 0.025,
-    pose.head[1] - chestOff * 1.25 + bodyBob * 0.48,
-  ];
-
-  // Solve limbs with clean joints
-  const shoulder = [chest[0] + 0.004, chest[1] + 0.034];
-  const shoulderL = [shoulder[0] - 0.066, shoulder[1]];
-  const shoulderR = [shoulder[0] + 0.066, shoulder[1]];
-  const hipL = [pelvis[0] - 0.046, pelvis[1] + 0.01];
-  const hipR = [pelvis[0] + 0.046, pelvis[1] + 0.01];
-  const elbowL = twoBone(shoulderL[0], shoulderL[1], hands.L[0], hands.L[1], UPPER_ARM, FOREARM, -pose.elbowBend);
-  const elbowR = twoBone(shoulderR[0], shoulderR[1], hands.R[0], hands.R[1], UPPER_ARM, FOREARM, pose.elbowBend);
-  const kneeL = twoBone(hipL[0], hipL[1], feet.L[0], feet.L[1], THIGH, SHIN, pose.kneeBend);
-  const kneeR = twoBone(hipR[0], hipR[1], feet.R[0], feet.R[1], THIGH, SHIN, -pose.kneeBend);
-
-  const strokePath = (points, color, width, shadow = false) => {
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    ctx.beginPath();
-    ctx.moveTo(points[0][0], points[0][1]);
-    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
-    ctx.strokeStyle = shadow ? shade(ink, 0.88) : ink;
-    ctx.lineWidth = width + 0.008;
-    ctx.stroke();
-
-    ctx.strokeStyle = color;
+  const lit = (base, frame, radius, far = false) => {
+    if (!detail) return color(base, far ? 0.76 : 1);
+    // Transform the screen-space key light into each part's local basis.
+    const inv = inverse(compose(k.world, frame));
+    const o = transform(inv, [0, 0]);
+    const l = transform(inv, [-0.65, -0.76]);
+    const side = l[0] - o[0] > 0 ? 1 : -1;
+    const g = ctx.createLinearGradient(-radius * side, 0, radius * side, 0);
+    g.addColorStop(0, color(base, far ? 0.35 : 0.42));
+    g.addColorStop(0.2, color(base, far ? 0.55 : 0.7));
+    g.addColorStop(0.52, color(base, far ? 0.74 : 1));
+    g.addColorStop(0.8, color(base, far ? 0.84 : 1, far ? 0.02 : 0.18));
+    g.addColorStop(1, color(base, far ? 0.65 : 0.85));
+    return g;
+  };
+  const stroke = (width = 0.0025, c = INK) => {
     ctx.lineWidth = width;
+    ctx.strokeStyle = c;
     ctx.stroke();
-
-    if (!shadow) {
-      ctx.globalAlpha = s.alpha * 0.28;
-      ctx.strokeStyle = "rgba(255,255,255,0.4)";
-      ctx.lineWidth = Math.max(0.005, width * 0.16);
-      ctx.stroke();
-      ctx.globalAlpha = s.alpha;
+  };
+  const path = (d) => {
+    let p = PATHS.get(d);
+    if (!p) {
+      p = new Path2D(d);
+      PATHS.set(d, p);
+    }
+    return p;
+  };
+  const fillPath = (d, fill, outline = 0) => {
+    const p = path(d);
+    ctx.fillStyle = fill;
+    ctx.fill(p);
+    if (outline) {
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = outline;
+      ctx.stroke(p);
     }
   };
-
-  const segment = (a, b, color, width, shadow = false) => strokePath([a, b], color, width, shadow);
-
-  const between = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
-
-  const terminal = (p, rx, ry, color, angle, shadow = false) => {
-    ctx.save();
-    ctx.translate(p[0], p[1]);
-    ctx.rotate(angle);
-    ctx.fillStyle = shadow ? shade(color, 0.92) : color;
-    ctx.strokeStyle = shadow ? shade(ink, 0.88) : ink;
-    ctx.lineWidth = 0.008;
+  /** Projected lattice, scalloped between meridians instead of circles. */
+  const lattice = (width, height, step = 0.035) => {
+    ctx.strokeStyle = pal.web;
+    ctx.lineWidth = 0.0017;
     ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
-    ctx.fill();
+    for (let j = -2; j <= 2; j++) {
+      const x = (j * width) / 2.4;
+      ctx.moveTo(x, -0.06);
+      ctx.quadraticCurveTo(x * 0.65, height * 0.4, x * 0.82, height + 0.04);
+    }
+    for (let y = -0.04; y < height + 0.04; y += step) {
+      ctx.moveTo(-width, y);
+      for (let j = 0; j < 4; j++)
+        ctx.quadraticCurveTo(
+          -width + ((j + 0.5) * width) / 2,
+          y + 0.013,
+          -width + ((j + 1) * width) / 2,
+          y,
+        );
+    }
     ctx.stroke();
-    if (!shadow) {
-      ctx.strokeStyle = "rgba(255,255,255,0.38)";
-      ctx.lineWidth = 0.005;
+  };
+  /** One smooth muscle envelope, with joint caps under the next segment. */
+  const segment = (a, b, profile, base, far, web = false) => {
+    const frame = boneFrame(a, b);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len < 1e-5) return;
+    ctx.save();
+    apply(ctx, frame);
+    const steps = 12;
+    const mesh = () => {
       ctx.beginPath();
-      ctx.arc(-rx * 0.12, -ry * 0.12, Math.max(rx, ry) * 0.5, Math.PI * 1.1, Math.PI * 1.7);
+      ctx.moveTo(-profile[0].r, 0);
+      for (let i = 1; i <= steps; i++)
+        ctx.lineTo(-sampleGirth(profile, i / steps), (i / steps) * len);
+      const end = sampleGirth(profile, 1);
+      ctx.quadraticCurveTo(0, len + end * 0.7, end, len);
+      for (let i = steps - 1; i >= 0; i--)
+        ctx.lineTo(sampleGirth(profile, i / steps), (i / steps) * len);
+      ctx.quadraticCurveTo(0, -profile[0].r * 1.9, -profile[0].r, 0);
+      ctx.closePath();
+    };
+    mesh();
+    ctx.fillStyle = lit(base, frame, Math.max(...profile.map((p) => p.r)), far);
+    ctx.fill();
+    // Thin silhouettes, not thick black outlines around every joint.
+    stroke(far ? 0.002 : 0.0015, color(base, 0.35));
+    if (detail) {
+      ctx.save();
+      mesh();
+      ctx.clip();
+      if (web) lattice(Math.max(...profile.map((p) => p.r)) * 1.15, len, 0.03);
+      if (micro) {
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
+        for (let y = 0; y < len; y += 0.006)
+          for (let x = -0.04; x < 0.04; x += 0.006)
+            ctx.fillRect(x, y, 0.0012, 0.0012);
+      }
+      // Long anatomical highlight, no sphere-stack banding.
+      ctx.strokeStyle = far
+        ? "rgba(143,175,208,0.08)"
+        : "rgba(177,211,245,0.12)";
+      ctx.lineWidth = 0.003;
+      ctx.beginPath();
+      ctx.moveTo(-profile[0].r * 0.55, len * 0.07);
+      ctx.quadraticCurveTo(
+        -profile[1].r * 0.9,
+        len * 0.4,
+        -sampleGirth(profile, 1) * 0.5,
+        len * 0.9,
+      );
       ctx.stroke();
+      ctx.restore();
     }
     ctx.restore();
   };
-
-  const drawLeg = (hip, knee, foot, shadow) => {
-    const blue = shadow ? shade(pal.blue, 0.88) : pal.blue;
-    const red = shadow ? shade(pal.red, 0.9) : pal.red;
-    strokePath([hip, knee, foot], blue, 0.07, shadow);
-    const bootTop = between(knee, foot, 0.46);
-    segment(bootTop, foot, red, 0.065, shadow);
-    const footAngle = Math.atan2(foot[1] - knee[1], foot[0] - knee[0]);
-    terminal(foot, 0.046, 0.024, red, footAngle, shadow);
-  };
-
-  const drawArm = (top, elbow, hand, shadow) => {
-    const red = shadow ? shade(pal.red, 0.9) : pal.red;
-    const blue = shadow ? shade(pal.blue, 0.88) : pal.blue;
-    strokePath([top, elbow, hand], blue, 0.054, shadow);
-    const cuff = between(elbow, hand, 0.44);
-    segment(cuff, hand, red, 0.056, shadow);
-    const angle = Math.atan2(hand[1] - elbow[1], hand[0] - elbow[0]);
-    terminal(hand, 0.036, 0.028, red, angle, shadow);
-  };
-
-  // Far limbs (shadow/depth)
-  drawLeg(hipL, kneeL, feet.L, true);
-  drawArm(shoulderL, elbowL, hands.L, true);
-
-  // Torso
-  const torsoDx = pelvis[0] - chest[0];
-  const torsoDy = pelvis[1] - chest[1];
-  const torsoLen = Math.max(0.14, Math.hypot(torsoDx, torsoDy));
-  const torsoAngle = Math.atan2(torsoDy, torsoDx) - Math.PI / 2;
-  ctx.save();
-  ctx.translate(chest[0], chest[1]);
-  ctx.rotate(torsoAngle);
-
-  const torsoPath = () => {
-    ctx.beginPath();
-    ctx.moveTo(-0.047, -0.052);
-    ctx.bezierCurveTo(-0.086, -0.052, -0.143, -0.016, -0.148, 0.042);
-    ctx.bezierCurveTo(-0.145, 0.1, -0.108, torsoLen * 0.62, -0.097, torsoLen - 0.008);
-    ctx.bezierCurveTo(-0.066, torsoLen + 0.032, 0.066, torsoLen + 0.032, 0.097, torsoLen - 0.008);
-    ctx.bezierCurveTo(0.108, torsoLen * 0.62, 0.145, 0.1, 0.148, 0.042);
-    ctx.bezierCurveTo(0.143, -0.016, 0.086, -0.052, 0.047, -0.052);
-    ctx.quadraticCurveTo(0, -0.026, -0.047, -0.052);
-    ctx.closePath();
-  };
-
-  torsoPath();
-  ctx.fillStyle = pal.red;
-  ctx.fill();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 0.022;
-  ctx.stroke();
-
-  // Blue side panels
-  ctx.fillStyle = pal.blue;
-  ctx.beginPath();
-  ctx.moveTo(-0.147, 0.035);
-  ctx.bezierCurveTo(-0.121, 0.074, -0.086, torsoLen * 0.36, -0.055, torsoLen * 0.62);
-  ctx.lineTo(-0.038, torsoLen + 0.018);
-  ctx.lineTo(-0.099, torsoLen - 0.004);
-  ctx.bezierCurveTo(-0.11, torsoLen * 0.6, -0.145, 0.098, -0.147, 0.035);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(0.147, 0.035);
-  ctx.bezierCurveTo(0.121, 0.074, 0.086, torsoLen * 0.36, 0.055, torsoLen * 0.62);
-  ctx.lineTo(0.038, torsoLen + 0.018);
-  ctx.lineTo(0.099, torsoLen - 0.004);
-  ctx.bezierCurveTo(0.11, torsoLen * 0.6, 0.145, 0.098, 0.147, 0.035);
-  ctx.closePath();
-  ctx.fill();
-
-  // Suit webbing detail
-  if (sz > 48) {
-    ctx.strokeStyle = pal.web;
-    ctx.lineWidth = 0.006;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(0, -0.036);
-    ctx.lineTo(0, torsoLen * 0.72);
-    ctx.moveTo(-0.036, -0.032);
-    ctx.quadraticCurveTo(-0.076, 0.005, -0.106, 0.055);
-    ctx.moveTo(0.036, -0.032);
-    ctx.quadraticCurveTo(0.076, 0.005, 0.106, 0.055);
-    ctx.moveTo(-0.098, 0.058);
-    ctx.quadraticCurveTo(0, 0.09, 0.098, 0.058);
-    ctx.moveTo(-0.076, Math.min(torsoLen * 0.52, 0.125));
-    ctx.quadraticCurveTo(0, Math.min(torsoLen * 0.65, 0.15), 0.076, Math.min(torsoLen * 0.52, 0.125));
-    ctx.stroke();
-  }
-
-  // Chest emblem
-  if (sz > 58) {
-    const ey = Math.min(torsoLen * 0.47, 0.105);
+  const boot = (leg, angle, far) => {
+    const calf = between(leg.joint, leg.end, 0.34);
+    segment(
+      calf,
+      leg.end,
+      [
+        { t: 0, r: 0.025 },
+        { t: 0.45, r: 0.022 },
+        { t: 1, r: 0.016 },
+      ],
+      pal.red,
+      far,
+      true,
+    );
+    const frame = compose(translate(...leg.end), rotate(angle));
     ctx.save();
-    ctx.translate(0, ey);
-    ctx.strokeStyle = pal.trim;
-    ctx.fillStyle = pal.trim;
-    ctx.lineWidth = 0.008;
-    ctx.lineCap = "round";
+    apply(ctx, frame);
+    const foot =
+      "M -0.016 -0.007 Q -0.022 0.009 -0.023 0.028 Q -0.024 0.039 -0.005 0.04 L 0.067 0.039 Q 0.08 0.038 0.08 0.030 Q 0.077 0.020 0.048 0.016 Q 0.022 0.008 0.016 -0.008 Z";
+    fillPath(foot, lit(pal.red, frame, 0.035, far), 0.0025);
+    if (detail) {
+      ctx.save();
+      ctx.clip(path(foot));
+      lattice(0.085, 0.04, 0.018);
+      ctx.restore();
+    }
     ctx.beginPath();
-    ctx.ellipse(0, -0.008, 0.012, 0.018, 0, 0, TAU);
-    ctx.ellipse(0, 0.018, 0.016, 0.025, 0, 0, TAU);
-    ctx.fill();
-    for (const side of [-1, 1]) {
-      for (let i = 0; i < 4; i++) {
-        const y = -0.018 + i * 0.014;
-        const reach = 0.04 + (i === 1 || i === 2 ? 0.012 : 0);
+    ctx.moveTo(-0.017, 0.037);
+    ctx.quadraticCurveTo(0.03, 0.043, 0.075, 0.036);
+    stroke(0.004, color(pal.blue, 0.8));
+    ctx.restore();
+  };
+  const leg = (chain, angle, far) => {
+    segment(chain.root, chain.joint, THIGH_GIRTH, pal.blue, far);
+    segment(chain.joint, chain.end, SHANK_GIRTH, pal.blue, far);
+    boot(chain, angle, far);
+  };
+  const hand = (frame, curls, spread, far) => {
+    ctx.save();
+    apply(ctx, frame);
+    const palm =
+      "M -0.013 -0.006 Q -0.017 0.012 -0.018 0.026 Q -0.016 0.04 0 0.039 Q 0.018 0.039 0.018 0.026 L 0.013 -0.006 Z";
+    fillPath(palm, lit(pal.red, frame, 0.021, far), 0.0015);
+    // Four fingers, three articulated phalanges each. Curl is projected from
+    // a hinge in depth, while spread/wrist use actual parent × local matrices.
+    for (let i = 0; i < 4; i++) {
+      const curl = clamp(curls[i + 1], 0, 1);
+      const x = -0.013 + i * 0.0085;
+      const length = [0.034, 0.038, 0.035, 0.028][i];
+      let joint = compose(
+        translate(x, 0.03 - Math.abs(i - 1.4) * 0.001),
+        rotate((i - 1.5) * spread * 0.23),
+      );
+      for (let ph = 0; ph < 3; ph++) {
+        const bend = curl * (ph + 1) * 0.95;
+        const len = length * [0.45, 0.32, 0.23][ph];
+        const projected = len * Math.cos(bend);
+        const end = transform(joint, [0, projected]);
+        const start = transform(joint, [0, 0]);
         ctx.beginPath();
-        ctx.moveTo(side * 0.01, y);
-        ctx.lineTo(side * 0.027, y + (i < 2 ? -0.012 : 0.01));
-        ctx.lineTo(side * reach, y + (i < 2 ? -0.002 : 0.022));
-        ctx.stroke();
+        ctx.moveTo(start[0], start[1]);
+        ctx.lineTo(end[0], end[1]);
+        stroke(0.0075, far ? color(pal.red, 0.5) : color(pal.red, 0.68));
+        stroke(0.0048, far ? color(pal.red, 0.72) : color(pal.red, 1, 0.15));
+        joint = compose(joint, translate(0, projected), rotate(curl * 0.13));
       }
     }
+    // Opposable thumb: a separate two-joint branch off the palm.
+    const tc = curls[0];
+    const thumb = compose(
+      translate(-0.012, 0.011),
+      rotate(lerp(0.95, -0.3, tc)),
+    );
+    const a = transform(thumb, [0, 0]);
+    const b = transform(thumb, [0, 0.018]);
+    const c = transform(
+      compose(thumb, translate(0, 0.018), rotate(-tc * 1.1)),
+      [0, 0.013],
+    );
+    ctx.beginPath();
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(b[0], b[1]);
+    ctx.lineTo(c[0], c[1]);
+    stroke(0.009, color(pal.red, far ? 0.5 : 0.75));
+    stroke(0.0055, color(pal.red, far ? 0.7 : 1, 0.1));
+    if (detail) {
+      ctx.beginPath();
+      ctx.moveTo(-0.012, 0.005);
+      ctx.lineTo(0.012, 0.005);
+      stroke(0.0018, pal.web);
+    }
+    ctx.restore();
+  };
+  const arm = (chain, wrist, curls, spread, far) => {
+    segment(chain.root, chain.joint, ARM_GIRTH, pal.blue, far);
+    // Red shoulder saddle and long red gauntlet over the blue undersuit.
+    segment(
+      chain.root,
+      between(chain.root, chain.joint, 0.32),
+      [
+        { t: 0, r: 0.038 },
+        { t: 0.6, r: 0.035 },
+        { t: 1, r: 0.032 },
+      ],
+      pal.red,
+      far,
+      true,
+    );
+    segment(chain.joint, chain.end, FOREARM_GIRTH, pal.blue, far);
+    segment(
+      between(chain.joint, chain.end, 0.25),
+      chain.end,
+      [
+        { t: 0, r: 0.024 },
+        { t: 0.4, r: 0.02 },
+        { t: 1, r: 0.013 },
+      ],
+      pal.red,
+      far,
+      true,
+    );
+    hand(wrist, curls, spread, far);
+  };
+  const p = s.pose;
+  // Far side is shaded, never solid black. Both thighs tuck behind the pelvis.
+  leg(k.legL, k.footAngL, true);
+  arm(k.armL, k.wristL, p.curlL ?? HANDS.relaxed, p.spreadL ?? 0.2, true);
+  leg(k.legR, k.footAngR, false);
+
+  ctx.save();
+  apply(ctx, k.torso);
+  const body =
+    "M -0.032 -0.053 Q -0.062 -0.026 -0.105 -0.014 Q -0.125 0.006 -0.112 0.054 L -0.089 0.135 Q -0.065 0.215 -0.081 0.282 Q -0.076 0.314 -0.034 0.330 Q 0 0.335 0.034 0.330 Q 0.076 0.314 0.081 0.282 Q 0.065 0.215 0.089 0.135 L 0.112 0.054 Q 0.125 0.006 0.105 -0.014 Q 0.062 -0.026 0.032 -0.053 Z";
+  fillPath(body, lit(pal.blue, k.torso, 0.12), 0.003);
+  ctx.save();
+  ctx.clip(path(body));
+  const red =
+    "M -0.035 -0.06 L -0.125 -0.018 L -0.111 0.065 Q -0.088 0.083 -0.076 0.099 L -0.042 0.227 L 0 0.288 L 0.042 0.227 L 0.076 0.099 Q 0.088 0.083 0.111 0.065 L 0.125 -0.018 L 0.035 -0.06 Z";
+  fillPath(red, lit(pal.red, k.torso, 0.11));
+  // Pectoral planes and abdominal masses are subtle specular/shadow shapes.
+  for (const side of [-1, 1]) {
+    ctx.save();
+    apply(ctx, scale(side, 1));
+    fillPath(
+      "M 0.008 0.021 Q 0.064 -0.008 0.101 0.024 Q 0.099 0.057 0.066 0.072 L 0.008 0.062 Z",
+      "rgba(255,177,167,0.12)",
+    );
+    fillPath(
+      "M 0.009 0.059 Q 0.055 0.080 0.088 0.058 Q 0.062 0.086 0.013 0.079 Z",
+      "rgba(32,1,16,0.26)",
+    );
+    for (let i = 0; i < 4; i++) {
+      const y = 0.09 + i * 0.033;
+      const w = 0.054 - i * 0.007;
+      ctx.beginPath();
+      ctx.moveTo(0.004, y);
+      ctx.quadraticCurveTo(w * 0.6, y - 0.006, w, y + 0.002);
+      ctx.lineTo(w * 0.87, y + 0.024);
+      ctx.lineTo(0.005, y + 0.021);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, y, 0, y + 0.028);
+      grad.addColorStop(0, "rgba(255,188,175,0.12)");
+      grad.addColorStop(0.7, "rgba(0,0,0,0)");
+      grad.addColorStop(1, "rgba(20,0,14,0.27)");
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.moveTo(0.092, 0.091);
+    ctx.quadraticCurveTo(0.075, 0.17, 0.065, 0.215);
+    stroke(0.004, "rgba(133,173,222,0.18)");
+    fillPath(
+      "M 0.046 0.238 L 0.079 0.215 L 0.084 0.249 L 0.035 0.273 Z",
+      color(pal.red, 0.83),
+    );
     ctx.restore();
   }
-
-  // Edge light
-  ctx.strokeStyle = "rgba(255,255,255,0.16)";
-  ctx.lineWidth = 0.007;
-  ctx.beginPath();
-  ctx.moveTo(-0.118, 0.005);
-  ctx.quadraticCurveTo(-0.143, 0.06, -0.1, torsoLen * 0.76);
-  ctx.stroke();
-
-  ctx.restore(); // torso
-
-  // Neck + near limbs
-  const neckEnd = between(chest, head, 0.57);
-  segment([chest[0], chest[1] - 0.018], neckEnd, pal.red, 0.073);
-  drawLeg(hipR, kneeR, feet.R, false);
-  drawArm(shoulderR, elbowR, hands.R, false);
-
-  // ── Mask ──
-  ctx.save();
-  ctx.translate(head[0], head[1]);
-  ctx.rotate(s.headTilt);
-
-  const headPath = () => {
-    ctx.beginPath();
-    ctx.moveTo(0, -0.108);
-    ctx.bezierCurveTo(0.064, -0.106, 0.094, -0.065, 0.092, -0.008);
-    ctx.bezierCurveTo(0.091, 0.055, 0.052, 0.099, 0, 0.112);
-    ctx.bezierCurveTo(-0.052, 0.099, -0.091, 0.055, -0.092, -0.008);
-    ctx.bezierCurveTo(-0.094, -0.065, -0.064, -0.106, 0, -0.108);
-    ctx.closePath();
-  };
-
-  headPath();
-  ctx.fillStyle = pal.red;
-  ctx.fill();
-
-  // Mask shading + webbing
-  ctx.save();
-  headPath();
-  ctx.clip();
-  const maskShade = ctx.createLinearGradient(-0.1, -0.1, 0.11, 0.1);
-  maskShade.addColorStop(0, "rgba(255,255,255,0.16)");
-  maskShade.addColorStop(0.48, "rgba(255,255,255,0)");
-  maskShade.addColorStop(1, "rgba(0,0,0,0.28)");
-  ctx.fillStyle = maskShade;
-  ctx.fillRect(-0.11, -0.12, 0.22, 0.25);
-
-  if (sz > 48) {
-    ctx.strokeStyle = pal.web;
-    ctx.lineWidth = 0.006;
-    ctx.lineCap = "round";
-    const rays = [
-      [0, -0.112], [0.059, -0.092], [0.093, -0.03], [0.08, 0.07],
-      [0.035, 0.108], [-0.035, 0.108], [-0.08, 0.07], [-0.093, -0.03], [-0.059, -0.092],
-    ];
-    for (const p of rays) {
-      ctx.beginPath();
-      ctx.moveTo(0, 0.006);
-      ctx.lineTo(p[0], p[1]);
-      ctx.stroke();
-    }
-    for (const [rx, ry] of [[0.035, 0.04], [0.064, 0.073], [0.093, 0.105]]) {
-      ctx.beginPath();
-      ctx.ellipse(0, 0.006, rx, ry, 0, 0, TAU);
-      ctx.stroke();
-    }
+  if (detail) {
+    ctx.save();
+    ctx.clip(path(red));
+    lattice(0.115, 0.29, 0.034);
+    ctx.restore();
   }
+  // Raised black chest emblem with eight angular legs.
+  ctx.save();
+  apply(ctx, translate(0, 0.058));
+  ctx.fillStyle = pal.trim;
+  ctx.beginPath();
+  ctx.ellipse(0, -0.015, 0.007, 0.012, 0, 0, TAU);
+  ctx.ellipse(0, 0.007, 0.01, 0.019, 0, 0, TAU);
+  ctx.fill();
+  for (const side of [-1, 1])
+    for (let i = 0; i < 4; i++) {
+      const y = -0.023 + i * 0.014;
+      const direction = i < 2 ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(side * 0.007, y);
+      ctx.lineTo(side * (0.02 + (i % 2) * 0.008), y + direction * 0.012);
+      ctx.lineTo(side * (0.027 + (i % 2) * 0.01), y + direction * 0.038);
+      stroke(0.0038, pal.trim);
+    }
+  ctx.restore();
+  ctx.restore();
   ctx.restore();
 
-  headPath();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 0.02;
-  ctx.stroke();
+  arm(k.armR, k.wristR, p.curlR ?? HANDS.relaxed, p.spreadR ?? 0.2, false);
+  // A short neck, seated into the trapezius, rather than a floating mask.
+  segment(
+    transform(k.torso, [0, -0.045]),
+    [k.head[0], k.head[1] + HEAD.ry * 0.66],
+    [
+      { t: 0, r: 0.03 },
+      { t: 1, r: 0.026 },
+    ],
+    pal.red,
+    false,
+    true,
+  );
 
-  // ── Expressive Eyes ──
-  let eyeHeight = Math.max(0.07, 1 - s.blink);
-  let eyeWidth = 1;
-  let lidShift = 0;
-  switch (s.expr) {
-    case "happy": eyeHeight *= 0.7; lidShift = -0.005; break;
-    case "suspicious": eyeHeight *= 0.78; lidShift = 0.009; break;
-    case "sleepy": eyeHeight = Math.min(eyeHeight, 0.34); lidShift = 0.012; break;
-    case "wow": eyeHeight = Math.min(1.16, eyeHeight * 1.12); eyeWidth = 1.08; break;
-    default: break;
-  }
-  const lookNudgeX = clamp(s.lookX, -1, 1) * 0.0035;
-  const lookNudgeY = clamp(s.lookY, -1, 1) * 0.0025;
-
-  for (const side of [-1, 1]) {
-    const innerX = side * (0.014 * eyeWidth) + lookNudgeX;
-    const outerX = side * (0.078 * eyeWidth) + lookNudgeX;
-    const topY = (-0.042 + lidShift + lookNudgeY) * eyeHeight;
-    const bottomY = (0.043 + lidShift + lookNudgeY) * eyeHeight;
-    ctx.beginPath();
-    ctx.moveTo(innerX, topY);
-    ctx.bezierCurveTo(
-      side * 0.036 * eyeWidth + lookNudgeX, topY * 1.28,
-      side * 0.068 * eyeWidth + lookNudgeX, topY * 1.12,
-      outerX, topY * 0.3
-    );
-    ctx.bezierCurveTo(
-      side * 0.078 * eyeWidth + lookNudgeX, bottomY * 0.42,
-      side * 0.049 * eyeWidth + lookNudgeX, bottomY * 1.08,
-      innerX, bottomY * 0.76
-    );
-    ctx.closePath();
-    ctx.fillStyle = pal.lens;
-    ctx.fill();
-    ctx.strokeStyle = pal.trim;
-    ctx.lineWidth = 0.012;
-    ctx.lineJoin = "round";
-    ctx.stroke();
-
-    if (eyeHeight > 0.25) {
-      ctx.strokeStyle = "rgba(255,255,255,0.52)";
-      ctx.lineWidth = 0.004;
+  ctx.save();
+  apply(ctx, k.headFrame);
+  const skull =
+    "M 0 -0.073 C 0.035 -0.075 0.055 -0.050 0.055 -0.020 C 0.055 0.018 0.041 0.049 0.024 0.064 Q 0 0.082 -0.024 0.064 C -0.041 0.049 -0.055 0.018 -0.055 -0.020 C -0.055 -0.050 -0.035 -0.075 0 -0.073 Z";
+  fillPath(skull, lit(pal.red, k.headFrame, 0.059), 0.0026);
+  ctx.save();
+  ctx.clip(path(skull));
+  if (detail) {
+    const yaw = clamp(s.lookX, -1, 1) * 0.006;
+    const cy = 0.02;
+    ctx.strokeStyle = pal.web;
+    ctx.lineWidth = 0.0017;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU;
       ctx.beginPath();
-      ctx.moveTo(innerX + side * 0.006, topY * 0.75);
-      ctx.quadraticCurveTo(side * 0.047, topY * 1.08, outerX - side * 0.01, topY * 0.56);
+      ctx.moveTo(yaw, cy);
+      ctx.quadraticCurveTo(
+        yaw + Math.cos(a) * 0.03,
+        cy + Math.sin(a) * 0.045,
+        Math.cos(a) * 0.095,
+        cy + Math.sin(a) * 0.13,
+      );
       ctx.stroke();
     }
+    for (const r of [0.23, 0.45, 0.67, 0.88, 1.1]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 12; i++) {
+        const a = (i / 12) * TAU;
+        const x = yaw + Math.cos(a) * 0.071 * r;
+        const y = cy + Math.sin(a) * 0.105 * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else {
+          const mid = a - TAU / 24;
+          ctx.quadraticCurveTo(
+            yaw + Math.cos(mid) * 0.062 * r,
+            cy + Math.sin(mid) * 0.092 * r,
+            x,
+            y,
+          );
+        }
+      }
+      ctx.stroke();
+    }
+    fillPath(
+      "M -0.044 -0.041 Q -0.036 -0.063 -0.017 -0.066 Q -0.032 -0.036 -0.039 -0.019 Z",
+      "rgba(255,211,191,0.23)",
+    );
+    fillPath(
+      "M 0.004 0.014 Q 0.002 0.038 0.016 0.041 L 0.007 0.050 L -0.004 0.043 Z",
+      "rgba(43,2,13,0.22)",
+    );
   }
-
-  ctx.restore(); // head
-  ctx.restore(); // body
+  // Angular swept lenses: high outer corner, narrow nasal bridge, black bezel.
+  const expression =
+    s.expr === "sleepy"
+      ? 0.35
+      : s.expr === "suspicious"
+        ? 0.72
+        : s.expr === "happy"
+          ? 0.8
+          : s.expr === "wow"
+            ? 1.1
+            : 1;
+  const eyeOpen = Math.max(0.09, (1 - s.blink) * expression);
+  for (const side of [-1, 1]) {
+    ctx.save();
+    apply(
+      ctx,
+      compose(
+        translate(clamp(s.lookX, -1, 1) * 0.002, clamp(s.lookY, -1, 1) * 0.002),
+        scale(side, eyeOpen),
+      ),
+    );
+    const lens =
+      "M 0.007 0.012 Q 0.022 -0.014 0.049 -0.039 C 0.055 -0.009 0.045 0.023 0.027 0.031 Q 0.017 0.036 0.007 0.012 Z";
+    const glass = ctx.createLinearGradient(0, -0.04, 0, 0.036);
+    glass.addColorStop(0, "#ffffff");
+    glass.addColorStop(0.55, pal.lens);
+    glass.addColorStop(1, "#94b3c8");
+    fillPath(lens, detail ? glass : pal.lens, 0.006);
+    if (detail) {
+      ctx.beginPath();
+      ctx.moveTo(0.02, 0.003);
+      ctx.quadraticCurveTo(0.034, -0.018, 0.045, -0.026);
+      stroke(0.0022, "rgba(255,255,255,0.9)");
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore();
+  ctx.restore();
 }
 
 // ─── Spider Controller ───────────────────────────────────────────────
 const AIR_GRAVITY = 3400;
-const WALK_SPEED = 130;
-const RUN_SPEED = 580;
+// Gait-locked ground speeds: the stance sweep in gaitFrame() matches these
+// px/s at the rendered character sizes (HyperTab's tuned pair).
+const WALK_SPEED = 95;
+const RUN_SPEED = 420;
 
 class SpiderController {
   constructor(canvas, palette, accentColor) {
@@ -783,7 +1342,7 @@ class SpiderController {
     this.margin = 26;
 
     // Render
-    this.size = 84;
+    this.size = 116;
     this.rotation = 0;
     this.targetRotation = 0;
     this.squash = 1;
@@ -803,11 +1362,12 @@ class SpiderController {
     this.headTiltTarget = 0;
     this.hiddenEdge = "none";
     this.poseTweak = null;
+    this.thwip = null;
+    this.reducedMotion = false;
 
     // Behavior
     this.behavior = null;
     this.idleGap = 1.5;
-    this.stepSfxPhase = 0;
 
     // Pointer
     this.pointer = { x: -999, y: -999, vx: 0, vy: 0, lastT: 0 };
@@ -827,6 +1387,7 @@ class SpiderController {
   resize() {
     const oldW = this.w;
     const oldH = this.h;
+    const oldGroundY = this.groundY;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.w = Math.max(1, window.innerWidth);
     this.h = Math.max(1, window.innerHeight);
@@ -834,10 +1395,13 @@ class SpiderController {
     this.canvas.height = Math.round(this.h * dpr);
     this.canvas.style.width = `${this.w}px`;
     this.canvas.style.height = `${this.h}px`;
+    // Use the actual backing-store ratio after rounding. This keeps the
+    // procedural linework pin-sharp on fractional-DPR/zoomed displays.
     this.ctx.setTransform(this.canvas.width / this.w, 0, 0, this.canvas.height / this.h, 0, 0);
     this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = "high";
     this.groundY = this.h - 14;
-    this.size = clamp(Math.min(this.w, this.h) * 0.16, 90, 140);
+    this.size = clamp(Math.min(this.w, this.h) * 0.18, 96, 156);
 
     if (oldW > 0 && oldH > 0) {
       const sx = this.w / oldW;
@@ -851,7 +1415,7 @@ class SpiderController {
       if (!this._isBusy("flee", "peek")) {
         this.pos.x = clamp(this.pos.x, this.margin - this.size * 0.25, this.w - this.margin + this.size * 0.25);
       }
-      if (this.mode === "ground") this.pos.y = this.groundY;
+      if (this.mode === "ground" || Math.abs(this.pos.y - oldGroundY) < 2) this.pos.y = this.groundY;
     }
 
     if (!Number.isFinite(this.pos.x) || !Number.isFinite(this.pos.y)) {
@@ -897,7 +1461,7 @@ class SpiderController {
   }
 
   onPointerDown(x, y) {
-    if (this.mode === "hidden" || this.alpha < 0.5) return;
+    if (this.reducedMotion || this.mode === "hidden" || this.alpha < 0.5) return;
     const d = Math.hypot(x - this.pos.x, y - (this.pos.y - this.size * 0.5));
     if (d < 300 && !this._isBusy("dodge", "flee")) {
       this._startDodge(x);
@@ -905,11 +1469,13 @@ class SpiderController {
   }
 
   onDoubleClick(x, y) {
-    if (this.mode === "hidden" || this.alpha < 0.5) return;
+    if (this.reducedMotion || this.mode === "hidden" || this.alpha < 0.5) return;
+    // Face the click, aim, and thwip a web at it — the strand then emits
+    // from the actual wrist/palm location, not a guessed hand position.
     this._faceToward(x);
+    this.thwip = { x: clamp(x, 10, this.w - 10), y: clamp(y, 8, this.h - 8), t: 0, fired: false };
     this.expr = "wow";
     this.exprHold = 0.8;
-    this._startClimbString(x, Math.min(y, 80));
   }
 
   // ── Internal helpers ──
@@ -919,15 +1485,33 @@ class SpiderController {
   _faceToward(x) { if (Math.abs(x - this.pos.x) > 8) this.facing = x > this.pos.x ? 1 : -1; }
   _boxTop() { return this.pos.y - this.size; }
 
-  _handWorld() {
-    const localX = 0.09 * this.facing;
-    const localY = 0.05;
-    const cos = Math.cos(this.rotation);
-    const sin = Math.sin(this.rotation);
+  /** One render snapshot is used by meshes AND attachment calculations. */
+  _renderState() {
+    const bk = this.behavior?.kind;
+    const local = inverse(bodyMatrix({ x: 0, y: 0, rotation: this.rotation, facing: this.facing, size: 1, squash: 1 }));
+    const look = transform(local, [this.lookX, this.lookY]);
     return {
-      x: this.pos.x + (cos * localX - sin * localY) * this.size,
-      y: this._boxTop() + (sin * localX + cos * localY) * this.size,
+      x: this.pos.x, y: this._boxTop(), rotation: this.rotation, facing: this.facing,
+      size: this.size, alpha: this.alpha, squash: this.squash, pose: this.pose,
+      headTilt: this.headTilt, lookX: look[0], lookY: look[1], blink: this.blink,
+      expr: this.expr, palette: this.palette,
+      walkPhase: this.thwip ? -1 : this.walkPhase,
+      run: bk === "run" || bk === "flee" ? 1 : bk === "walk" ? 0.12 : 0,
+      breathe: this.breathe, hidden: this.hiddenEdge, quality: 1,
     };
+  }
+
+  /** world position of the "near hand" (used by web lines) */
+  _handWorld() {
+    const p = solveSkeleton(this._renderState()).webHand;
+    return { x: p[0], y: p[1] };
+  }
+
+  /** Translate the body, never stretch a bone, to meet a world constraint. */
+  _pinAttachment(which, x, y) {
+    const p = solveSkeleton(this._renderState())[which];
+    this.pos.x += x - p[0];
+    this.pos.y += y - p[1];
   }
 
   _endBehavior() {
@@ -939,6 +1523,18 @@ class SpiderController {
   }
 
   _spawnEntrance() {
+    if (this.reducedMotion) {
+      // Reduced motion gets a visible, stationary companion, not a walk-in.
+      this.mode = "ground";
+      this.pos = { x: this.w - Math.max(70, this.size * 0.6), y: this.groundY };
+      this.facing = -1;
+      this.alpha = 1;
+      this.pose = POSES.stand;
+      this.behavior = null;
+      return;
+    }
+    // Cinematic entrance: always aim across the viewport rather than picking
+    // another anchor in the same corner.
     const fromLeft = chance(0.5);
     this.mode = "air";
     this.pos = { x: fromLeft ? -this.size * 0.35 : this.w + this.size * 0.35, y: this.h * 0.28 };
@@ -986,7 +1582,7 @@ class SpiderController {
       ? { x: clamp(anchorX, 40, this.w - 40), y: rand(8, Math.max(9, Math.min(36, this.h * 0.06))) }
       : this._pickAnchor(anchorX);
     const attach = () => {
-      const hand = { x: this.pos.x, y: this._boxTop() + this.size * 0.1 };
+      const hand = this._handWorld();
       this.rope.attach(anchor.x, anchor.y, hand.x, hand.y, this.vel.x / 60, this.vel.y / 60);
       this.mode = "swing";
       this.swingPump = 0;
@@ -1064,33 +1660,38 @@ class SpiderController {
   }
 
   _dispatch(kind) {
+    this.poseTweak = null;
+    this.walkPhase = -1;
     switch (kind) {
       case "climbString": return this._startClimbString();
       case "walk": return this._startWalk(false);
       case "run": return this._startWalk(true);
       case "hop": return this._startHop();
-      case "swing": return this._startSwing();
+      case "swing": return this.reducedMotion ? this._startWalk(true) : this._startSwing();
       case "hang": return this._startHang();
       case "crawlWall": return this._startCrawl();
       case "peek": return this._startPeek();
       case "sitGround": case "perch": case "crouch": case "sleep":
-      case "watch": case "wave": case "idle": {
+      case "watch": case "wave": case "salute": case "idle": {
         const poseFor = {
           sitGround: "sit", perch: "sit", crouch: "crouch", sleep: "sleep",
-          watch: "watch", wave: "wave", idle: "stand",
+          watch: "watch", wave: "wave", salute: "salute", idle: "stand",
         };
         const durFor = {
           sitGround: rand(4, 9), perch: rand(5, 10), crouch: rand(2.5, 6), sleep: rand(6, 12),
-          watch: 1.9, wave: 2.2, idle: rand(3, 7),
+          watch: 1.9, wave: 2.2, salute: 2.4, idle: rand(3, 7),
         };
-        if (kind === "wave") {
+        if (kind === "wave" && !this.reducedMotion) {
           this.poseTweak = (p, t) => ({
-            ...p, handR: [0.28 + Math.sin(t * 9) * 0.055, 0.12 + Math.cos(t * 9) * 0.03],
+            ...p,
+            handR: [p.handR[0] + Math.sin(t * 7) * 0.025, p.handR[1]],
+            wristR: (p.wristR ?? 0) + Math.sin(t * 9) * 0.32,
           });
         }
         if (kind === "watch") {
           this.poseTweak = (p, t) => ({
-            ...p, head: [p.head[0], p.head[1] + (t > 0.7 ? Math.sin(t * 5) * 0.006 : 0)],
+            ...p,
+            head: [p.head[0], p.head[1] + (t > 0.7 ? Math.sin(t * 5) * 0.006 : 0)],
           });
         }
         if (kind === "sleep") this.expr = "sleepy";
@@ -1120,6 +1721,16 @@ class SpiderController {
       this.pos = { x: this.w / 2, y: this.groundY };
       this.vel = { x: 0, y: 0 };
       this.rotation = 0; this.targetRotation = 0;
+    }
+
+    if (this.reducedMotion) {
+      if (this.mode !== "hidden") {
+        this.rope.detach(); this.behavior = null; this.mode = "ground";
+        this.pos.y = this.groundY; this.walkPhase = -1;
+        this.rotation = this.targetRotation = 0; this.squash = 1;
+        this.pose = POSES.stand; this.alpha = 1; this.blink = 0;
+      }
+      return;
     }
 
     if (this.mode !== "hidden") this.alpha = damp(this.alpha, 1, 9, dt);
@@ -1174,9 +1785,7 @@ class SpiderController {
         this.rope.length = Math.max(35, this.rope.length - dt * 520);
         this.rope.step(dt, 0.9);
         const bob = { x: this.rope.x, y: this.rope.y };
-        this.pos.x = damp(this.pos.x, bob.x, 12, dt);
-        this.pos.y = damp(this.pos.y, bob.y + this.size * 0.65, 12, dt);
-        
+
         // Physical rotation toward string vector
         const stringAngle = Math.atan2(this.rope.anchor.y - bob.y, this.rope.anchor.x - bob.x) + Math.PI / 2;
         this.targetRotation = clamp(stringAngle, -0.6, 0.6);
@@ -1193,6 +1802,8 @@ class SpiderController {
           footR: [0.14, 0.82 - Math.sin(tClimb * 12) * 0.09],
           kneeBend: 1, elbowBend: 1,
         });
+        // The body itself is placed after the pose blend by pinning the
+        // rendered wrist to the rope (shared attachment geometry).
 
         if (this.pos.y <= this.rope.anchor.y + this.size * 1.1 || this.rope.length <= 38) {
           this.rope.detach();
@@ -1223,12 +1834,8 @@ class SpiderController {
         const angle = Math.atan2(this.rope.anchor.x - bob.x, -(this.rope.anchor.y - bob.y));
         this.targetRotation = clamp(angle, -1.05, 1.05);
         this.rotation = this.targetRotation;
-        const handLocalX = 0.09 * this.facing;
-        const cos = Math.cos(this.rotation);
-        const sin = Math.sin(this.rotation);
-        this.pos.x = bob.x - (cos * handLocalX - sin * 0.05) * this.size;
-        this.pos.y = bob.y - (sin * handLocalX + cos * 0.05) * this.size + this.size;
         this._faceToward(this.pos.x + vel.x);
+        this._pinAttachment("webHand", bob.x, bob.y);
         if (this.pos.y >= this.groundY - this.size * 0.2) {
           this.rope.detach();
           const v2 = this.rope.velocity(dt);
@@ -1245,11 +1852,9 @@ class SpiderController {
         const sway = Math.sin((this.behavior?.phase ?? 0)) * 0.08 * Math.max(0.3, 1 - (this.behavior?.t ?? 0) * 0.04);
         this.targetRotation = Math.PI + sway;
         const anchor = this.rope.anchor;
-        const len = clamp(Math.hypot(this.pos.x - anchor.x, (this.pos.y - this.size) - anchor.y), this.size * 0.8, this.size * 2.4);
-        const sx = anchor.x + Math.sin(sway * 2.2) * len * 0.12;
-        const sy = anchor.y + len;
-        this.pos.x = damp(this.pos.x, sx, 5, dt);
-        this.pos.y = damp(this.pos.y, sy + this.size * 0.98, 5, dt);
+        const len = clamp(this.rope.length, this.size * 0.85, this.size * 2.0);
+        this.rope.x = anchor.x + Math.sin(sway * 2.2) * len * 0.12;
+        this.rope.y = anchor.y + len;
         break;
       }
       case "ground":
@@ -1265,7 +1870,24 @@ class SpiderController {
     // Pose blend
     let target = POSES[this.poseName];
     if (this.poseTweak) target = this.poseTweak(target, this.behavior?.t ?? this.breathe);
-    this.pose = blendPose(this.pose, target, Math.min(1, dt * this.poseBlend));
+    if (this.thwip) {
+      this.thwip.t += dt;
+      const local = transform(inverse(bodyMatrix(this._renderState())), [this.thwip.x, this.thwip.y]);
+      // Upper body overlay: keep locomotion/foot contacts when firing in air.
+      const aiming = this.mode === "ground" ? POSES.point : target;
+      target = { ...aiming, handR: local, curlR: HANDS.thwip, spreadR: 0.9, wristR: -0.10 };
+    }
+    this.pose = blendPose(this.pose, target, 1 - Math.exp(-dt * (this.thwip ? 20 : this.poseBlend)));
+    if (this.mode === "swing" && this.rope.attached) this._pinAttachment("webHand", this.rope.x, this.rope.y);
+    if (this.mode === "hang" && this.rope.attached && this.swingPump !== -1) this._pinAttachment("webAnkle", this.rope.x, this.rope.y);
+    if (this.mode === "climb" && this.rope.attached) this._pinAttachment("webHand", this.rope.x, this.rope.y);
+    if (this.thwip && this.thwip.t > 0.16 && !this.thwip.fired) {
+      const hand = this._handWorld();
+      this.fx.shot(hand.x, hand.y, this.thwip.x, this.thwip.y);
+      this.fx.splat(this.thwip.x, this.thwip.y);
+      this.thwip.fired = true;
+    }
+    if (this.thwip && this.thwip.t > 0.85) this.thwip = null;
   }
 
   _updateBehavior(dt) {
@@ -1307,10 +1929,16 @@ class SpiderController {
         if (this.mode === "ground") return this._endBehavior();
         break;
       }
+      case "climbString": {
+        // Completion is handled by the climb physics in _update; keep the
+        // behaviour (and its hand-over-hand pose tweak) alive until then.
+        if (this.mode !== "climb") return this._endBehavior();
+        break;
+      }
       case "swing": {
         if (!this.rope.attached && this.mode === "air") {
           if (this.vel.y < -60 || this.pos.y < this.groundY - this.size * 1.6) {
-            const hand = { x: this.pos.x, y: this._boxTop() + this.size * 0.1 };
+            const hand = this._handWorld();
             this.rope.attach(b.tx, b.ty, hand.x, hand.y, this.vel.x / 60, this.vel.y / 60);
             this.mode = "swing";
             this.fx.splat(b.tx, b.ty);
@@ -1322,6 +1950,7 @@ class SpiderController {
         const overApex = vel.y < 0 && Math.sign(vel.x || this.facing) === this.facing;
         const hardTimeout = b.t > b.dur + 2.4;
         if ((b.t > b.dur && overApex) || hardTimeout) {
+          // Release at the apex, but always release after a short grace period.
           const v = this.rope.velocity(dt);
           this.rope.detach();
           this.mode = "air";
@@ -1340,7 +1969,8 @@ class SpiderController {
               if (this.behavior === b && this.mode === "air") {
                 const a2 = this._pickAnchor(this.pos.x + this.facing * rand(150, 320));
                 b.tx = a2.x; b.ty = a2.y;
-                this.rope.attach(a2.x, a2.y, this.pos.x, this._boxTop() + this.size * 0.1, this.vel.x / 60, this.vel.y / 60);
+                const hand = this._handWorld();
+                this.rope.attach(a2.x, a2.y, hand.x, hand.y, this.vel.x / 60, this.vel.y / 60);
                 this.mode = "swing";
               }
             }, 260);
@@ -1377,7 +2007,17 @@ class SpiderController {
         const dy = b.ty - this.pos.y;
         if (Math.abs(dy) > 10) {
           this.pos.y += Math.sign(dy) * speed * dt;
-          this.walkPhase = (b.phase += dt * 8);
+          b.phase += dt * 4;
+          this.walkPhase = -1;
+          // Independent crawl contacts — alternate limbs instead of using
+          // the ground gait's foot plants.
+          this.poseTweak = (p) => ({
+            ...p,
+            handL: [p.handL[0], p.handL[1] + Math.sin(b.phase) * 0.055],
+            handR: [p.handR[0], p.handR[1] - Math.sin(b.phase) * 0.055],
+            footL: [p.footL[0], p.footL[1] - Math.sin(b.phase) * 0.06],
+            footR: [p.footR[0], p.footR[1] + Math.sin(b.phase) * 0.06],
+          });
         } else if (b.t > b.dur * 0.55 || chance(dt * 0.3)) {
           this.walkPhase = -1;
           if (b.t > b.dur) {
@@ -1405,7 +2045,7 @@ class SpiderController {
         break;
       }
       case "sitGround": case "crouch": case "sleep":
-      case "watch": case "wave": case "idle": {
+      case "watch": case "wave": case "salute": case "idle": {
         if (b.kind === "sleep" || b.kind === "sitGround" || b.kind === "idle") {
           this.headTiltTarget = b.kind === "idle" ? Math.sin(b.t * 0.8) * 0.14 : 0;
         }
@@ -1429,7 +2069,7 @@ class SpiderController {
     this.vel = { x: 0, y: 0 };
     this.targetRotation = 0;
     this.rotation = 0;
-    this.squash = 0.72;
+    this.squash = 0.88;
     this._setPose("land", 18);
     this.behavior = {
       kind: "landBeat", t: 0, dur: 0.34, tx: 0, ty: 0, wall: 1, phase: 0, chained: false, released: false, dir: 1,
@@ -1450,7 +2090,7 @@ class SpiderController {
 
     if (d < 120 && cursorSpeed > 260) {
       this.fleeCooldown = 1.4;
-      if (chance(0.3)) {
+      if (chance(0.3) && !this.reducedMotion) {
         this._startSwing(this.pos.x + (this.pos.x > this.pointer.x ? 1 : -1) * rand(200, 340));
       } else {
         this.behavior = {
@@ -1467,6 +2107,8 @@ class SpiderController {
   _draw() {
     const { ctx } = this;
     ctx.clearRect(0, 0, this.w, this.h);
+    const state = this._renderState();
+    const rig = solveSkeleton(state);
 
     this.fx.update(this.frameDt);
     this.fx.render(ctx);
@@ -1475,38 +2117,37 @@ class SpiderController {
     if (this.mode === "swing" && this.rope.attached) {
       this.rope.render(ctx, this.accentColor);
     } else if (this.mode === "hang" && this.rope.attached) {
+      // a simple taut strand while hanging / perching
       ctx.save();
       ctx.strokeStyle = "rgba(240,244,255,0.9)";
       ctx.lineWidth = 1.5;
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(this.rope.anchor.x, this.rope.anchor.y);
-      ctx.lineTo(this.pos.x, this._boxTop() + this.size * 0.04);
+      ctx.lineTo(rig.webAnkle[0], rig.webAnkle[1]);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // Ground contact lives in screen space; never rotates with the hero.
+    if (this.mode === "ground" && this.alpha > 0.01) {
+      ctx.save();
+      for (const ankle of [rig.legL.end, rig.legR.end]) {
+        const foot = transform(rig.world, ankle);
+        const gradient = ctx.createRadialGradient(foot[0], this.groundY, 0, foot[0], this.groundY, this.size * 0.095);
+        gradient.addColorStop(0, `rgba(0,0,0,${this.alpha * 0.45})`);
+        gradient.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(foot[0], this.groundY, this.size * 0.095, this.size * 0.022, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
     // Draw the character
     if (this.alpha > 0.01) {
-      drawSpider(ctx, {
-        x: this.pos.x,
-        y: this._boxTop(),
-        rotation: this.rotation,
-        facing: this.facing,
-        size: this.size,
-        alpha: this.alpha,
-        squash: this.squash,
-        pose: this.pose,
-        headTilt: this.headTilt,
-        lookX: this.lookX,
-        lookY: this.lookY,
-        blink: this.blink,
-        expr: this.expr,
-        palette: this.palette,
-        walkPhase: this.walkPhase,
-        breathe: this.breathe,
-        hidden: this.hiddenEdge,
-      });
+      drawSpider(ctx, state, rig);
     }
   }
 }
@@ -1536,6 +2177,9 @@ const InteractiveSpider = ({
     if (!canvas) return;
 
     const ctrl = new SpiderController(canvas, palette, accentColor);
+    ctrl.reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     controllerRef.current = ctrl;
 
     // Event handlers
@@ -1595,6 +2239,24 @@ const InteractiveSpider = ({
       />
     </div>
   );
+};
+
+// Test-only handle (used by the headless rig checks); not a named export,
+// so fast-refresh keeps working for this component module.
+InteractiveSpider.__internals = {
+  SpiderController,
+  Brain,
+  POSES,
+  HANDS,
+  BONES,
+  blendPose,
+  solveIK,
+  solveSkeleton,
+  bodyMatrix,
+  gaitFrame,
+  drawSpider,
+  SwingRope,
+  WebEffects,
 };
 
 export default InteractiveSpider;
