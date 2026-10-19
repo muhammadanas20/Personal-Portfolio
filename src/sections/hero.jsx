@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowDown, Download, ArrowUpRight } from "lucide-react";
+import { ArrowDown, Download } from "lucide-react";
 import { MaskLines, Reveal } from "@/components/reveal";
 import { Scramble } from "@/components/scramble";
 import { Seal } from "@/components/seal";
@@ -16,10 +16,13 @@ const roles = [
 ];
 
 export const Hero = () => (
-  <section id="top" className="relative pt-16 sm:pt-24 pb-8 sm:pb-16 overflow-hidden">
+  <section
+    id="top"
+    className="relative pt-20 sm:pt-24 lg:pt-[5.25rem] pb-8 sm:pb-10 overflow-hidden"
+  >
     <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
       {/* Top meta strip */}
-      <Reveal className="flex items-center justify-between meta-label text-ink-soft mb-6 sm:mb-12">
+      <Reveal className="flex items-center justify-between meta-label text-ink-soft mb-5 sm:mb-7">
         <span className="flex items-center gap-2.5">
           <span className="relative flex w-2 h-2">
             <span className="absolute inset-0 rounded-full bg-vermilion animate-ping opacity-60" />
@@ -32,7 +35,7 @@ export const Hero = () => (
       </Reveal>
 
       {/* The name — viewport-scaled kinetic type */}
-      <h1 className="font-display font-medium tracking-[-0.025em] leading-[0.86] text-[clamp(3.4rem,11.5vw,10.5rem)]">
+      <h1 className="font-display font-medium tracking-[-0.025em] leading-[0.86] text-[clamp(3.4rem,11.5vw,10.5rem)] lg:text-[clamp(3.4rem,min(11.5vw,14svh),10.5rem)]">
         <MaskLines lines={["MUHAMMAD"]} />
         <MaskLines
           delay={0.12}
@@ -48,11 +51,11 @@ export const Hero = () => (
       </h1>
 
       {/* Under the name: role / intro / portrait */}
-      <div className="mt-8 sm:mt-10 grid lg:grid-cols-12 gap-12 lg:gap-10 items-end">
-        <div className="lg:col-span-7 space-y-7">
+      <div className="mt-7 sm:mt-9 grid lg:grid-cols-12 gap-10 lg:gap-12 lg:items-start">
+        <div className="lg:col-span-7 space-y-6 lg:pt-2">
           <Reveal delay={0.1}>
-            <p className="meta-label text-ink-soft">
-              <span className="text-vermilion mr-2">//</span>
+            <p className="meta-label flex items-center gap-3 text-ink-soft">
+              <span aria-hidden="true" className="h-px w-7 bg-vermilion" />
               <Scramble words={roles} className="text-ink" />
             </p>
           </Reveal>
@@ -91,7 +94,7 @@ export const Hero = () => (
         </div>
 
         {/* Portrait — arch frame, editorial caption */}
-        <div className="lg:col-span-5 lg:justify-self-end w-full max-w-[340px] sm:max-w-[380px] mx-auto lg:mx-0">
+        <div className="lg:col-span-5 lg:justify-self-end w-full max-w-[320px] sm:max-w-[360px] lg:mx-0 lg:w-[clamp(230px,28.5svh,340px)]">
           <motion.figure
             initial={{ opacity: 0, y: 40, rotate: 1.5 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
@@ -107,11 +110,11 @@ export const Hero = () => (
                 height={1024}
               />
             </div>
-            <figcaption className="mt-3 flex items-center justify-between meta-label text-ink-soft">
+            <figcaption className="mt-3 flex items-center justify-between gap-4 whitespace-nowrap meta-label text-[10px] text-ink-soft">
               <span>FIG. 01 — the developer</span>
               <span className="text-vermilion">est. 2006</span>
             </figcaption>
-            <span className="absolute -left-6 sm:-left-10 top-8 hidden sm:block">
+            <span className="absolute -left-10 top-8 hidden lg:block">
               <Seal size={86} text="· PRINTED IN KARACHI · SHIPPED WORLDWIDE " />
             </span>
           </motion.figure>
@@ -119,8 +122,8 @@ export const Hero = () => (
       </div>
 
       {/* Scroll hint */}
-      <Reveal delay={0.5} className="mt-10 sm:mt-16 flex items-center gap-4 meta-label text-ink-soft">
-        <span className="relative block w-px h-12 bg-line overflow-hidden">
+      <Reveal delay={0.5} className="mt-8 sm:mt-9 flex items-center gap-4 meta-label text-ink-soft">
+        <span className="relative block w-px h-10 bg-line overflow-hidden">
           <motion.span
             className="absolute top-0 left-0 w-px h-4 bg-vermilion"
             animate={{ y: [-16, 48] }}

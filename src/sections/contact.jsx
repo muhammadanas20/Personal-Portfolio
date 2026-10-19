@@ -79,7 +79,11 @@ export const Contact = () => {
   const set = (key) => (e) => setFormData({ ...formData, [key]: e.target.value });
 
   return (
-    <section id="contact" className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden">
+    <section
+      id="contact"
+      data-cursor-light
+      className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden"
+    >
       <span
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-8 left-2 font-display display-wonk text-[clamp(6rem,16vw,14rem)] leading-none text-cream/[0.05]"

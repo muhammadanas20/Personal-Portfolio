@@ -59,7 +59,7 @@ export const Navbar = () => {
           <a
             href="#"
             onClick={(e) => go(e, "#")}
-            className="group flex items-center gap-3 select-none"
+            className="group flex shrink-0 items-center gap-3 select-none"
             aria-label="Muhammad Anas — home"
           >
             <img
@@ -69,16 +69,16 @@ export const Navbar = () => {
               height={30}
               className="w-[30px] h-[30px] rounded-[4px] transition-transform duration-500 group-hover:rotate-[8deg]"
             />
-            <span className="font-display text-lg font-semibold tracking-tight leading-none">
+            <span className="font-display text-lg font-semibold tracking-tight leading-none whitespace-nowrap">
               Muhammad&nbsp;Anas
             </span>
-            <span className="hidden lg:inline meta-label text-ink-soft group-hover:text-vermilion transition-colors">
+            <span className="hidden xl:inline meta-label text-ink-soft group-hover:text-vermilion transition-colors">
               — portfolio ’26
             </span>
           </a>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden shrink-0 items-center gap-6 lg:flex xl:gap-7">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -107,7 +107,7 @@ export const Navbar = () => {
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="md:hidden relative z-[96] w-11 h-11 -mr-2 grid place-items-center"
+            className="relative z-[96] grid h-11 w-11 -mr-2 place-items-center lg:hidden"
           >
             <span
               className={`absolute w-6 h-[1.5px] bg-current transition-transform duration-300 ${
@@ -131,7 +131,8 @@ export const Navbar = () => {
             animate={{ clipPath: "inset(0 0 0% 0)" }}
             exit={{ clipPath: "inset(0 0 100% 0)" }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[95] bg-ink text-cream md:hidden flex flex-col justify-between px-6 pt-24 pb-10"
+            data-cursor-light
+            className="fixed inset-0 z-[95] flex flex-col justify-between bg-ink px-6 pt-24 pb-10 text-cream lg:hidden"
           >
             <nav className="flex flex-col gap-1">
               {navLinks.map((link, i) => (

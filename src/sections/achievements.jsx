@@ -142,6 +142,7 @@ export const Achievements = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={() => setSelected(null)}
+            data-cursor-light
             className="fixed inset-0 z-[98] bg-ink/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
             role="dialog"
             aria-modal="true"
