@@ -294,19 +294,26 @@
   }
 
   /* Portrait plate — the cut-out sits on the frame's own ground, so a
-     gentle print grade keeps skin and paper in the same family. */
+     gentle print grade keeps skin and paper in the same family. The asset is
+     already 4:5 with the plate composition baked in, so the subject is
+     framed identically at every size. */
   .portrait-plate {
     background: var(--c-plate);
     width: 100%;
     aspect-ratio: 4 / 5;
+    /* keeps the cut-out from hairline-fringing against the plate ground */
+    isolation: isolate;
   }
-  /* From lg up the plate is sized from the *viewport height* instead of the
-     width: the figure, its caption and the scroll hint then always land
-     inside the first screen, whatever the laptop. The width follows the
-     height through the 4:5 ratio, so the two never drift apart. */
+  /* From lg up the plate is the *reference plate size*: 219 × 274 at the
+     1524 × 718 design viewport (30.5svh). Capping it there keeps the portrait
+     the size the design asks for; it only eases down on short laptops so the
+     figure, its caption and the scroll hint stay inside the first screen.
+     The old uncapped 31svh–330px let it grow 25% past the design on a taller
+     window (218×272 next to a 175×219 plate in the mock). The width follows
+     through the 4:5 ratio, so the two never drift apart. */
   @media (min-width: 1024px) {
     .portrait-plate {
-      --plate-h: clamp(210px, 31svh, 330px);
+      --plate-h: clamp(196px, 30.5svh, 219px);
       height: var(--plate-h);
       width: calc(var(--plate-h) * 0.8);
       aspect-ratio: auto;

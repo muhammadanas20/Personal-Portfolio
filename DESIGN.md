@@ -86,12 +86,19 @@ Scale (clamp, fluid):
 - Radii: mostly 0 (editorial sharp) · images: arch top (`border-radius: 999px 999px 0 0`)
   for the portrait, 4px elsewhere
 - Borders: 1px hairlines, never heavy shadows
-- Hero portrait: the plate is sized from the **viewport height**
-  (`clamp(210px, 31svh, 330px)`, width = height × 4/5) so the figure, its caption and
-  the scroll hint always land inside the first screen — a short laptop used to push the
-  portrait past the fold. Below `lg` it falls back to a width-driven 4:5 plate.
+- Hero portrait: the plate is the **reference size — 175 × 219 css** (4:5), i.e.
+  `clamp(196px, 30.5svh, 219px)` high from `lg` up. The upper cap is what matters:
+  the old uncapped `31svh → 330px` let the plate grow ~25% past the design on a
+  taller window (218 × 272 rendered next to a 175 × 219 plate in the mock). It still
+  eases down below 219px on a short laptop so the figure, caption and scroll hint land
+  inside the first screen. Below `lg` it is a width-driven 4:5 plate.
   The portrait is a keyed cut-out (`public/portrait.png`) so the subject is printed on
-  the plate's own ground instead of sitting on a cold white studio background.
+  the plate's own ground instead of sitting on a cold white studio background. The asset
+  is **1080 × 1350** (4:5) with the plate composition baked in — central 80% of the
+  original 1:1 frame, hair crown 9.9% below the arch, shoulders meeting the base — so the
+  framing never drifts with `object-fit` rounding. Its matte is colour-decontaminated and
+  rebuilt with a 1px feathered edge: the original rim kept the studio-white backdrop in
+  its semi-transparent pixels, which read as a bright halo once the plate turns charcoal.
 
 ## 5. Signature Components
 1. **Grain overlay** — fixed SVG turbulence film, opacity .28, pointer-events none
