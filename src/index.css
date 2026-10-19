@@ -2,25 +2,100 @@
 
 /* ─────────────────────────────────────────────────────────────
    ATELIER — design tokens
+   ─────────────────────────────────────────────────────────────
+   The palette lives in plain custom properties (--c-*) so the
+   whole surface can be re-tinted at runtime. Tailwind reads them
+   through `@theme inline`, so `bg-paper`, `text-ink`, `border-line`
+   … all resolve to the active theme's values. Switching themes is
+   therefore a single attribute write on <html> — no re-render, no
+   duplicated stylesheet.
    ───────────────────────────────────────────────────────────── */
-@theme {
-  --color-paper: #f2eee7;
-  --color-paper-2: #faf8f2;
-  --color-ink: #1a1610;
-  --color-ink-2: #262019;
-  --color-ink-soft: #6e675a;
-  --color-line: rgba(26, 22, 16, 0.16);
-  --color-cream: #ede7db;
-  --color-cream-soft: #a79e8e;
-  --color-line-dark: rgba(237, 231, 219, 0.18);
-  --color-vermilion: #ef4b22;
-  --color-highlight: #ffc94a;
 
+:root {
+  /* paper chapter */
+  --c-paper: #f2eee7;
+  --c-paper-2: #faf8f2;
+  /* the ground the portrait plate is printed on */
+  --c-plate: #faf8f2;
+  /* ink chapter */
+  --c-ink: #1a1610;
+  --c-ink-2: #262019;
+  --c-ink-soft: #6e675a;
+  --c-line: rgba(26, 22, 16, 0.16);
+  --c-cream: #ede7db;
+  --c-cream-soft: #a79e8e;
+  --c-line-dark: rgba(237, 231, 219, 0.18);
+  /* the dark chapter surface + the ink that sits on top of it */
+  --c-ink-surface: #1a1610;
+  --c-on-ink: #1a1610;
+  /* accents */
+  --c-vermilion: #ef4b22;
+  --c-highlight: #ffc94a;
+  /* cursor inks */
+  --c-cursor-dot: #1a1610;
+  --c-cursor-dot-light: #ede7db;
+  --c-cursor-ring: rgba(26, 22, 16, 0.5);
+  --c-cursor-ring-light: rgba(237, 231, 219, 0.7);
+  /* print grain */
+  --c-grain-blend: multiply;
+  --c-grain-opacity: 0.32;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* paper chapter — warm charcoal instead of warm paper */
+  --c-paper: #131110;
+  --c-paper-2: #1d1a16;
+  --c-plate: #221e19;
+  /* ink chapter keeps cream text; the "ink" token flips to light
+     because it now sits on the dark page ground */
+  --c-ink: #f0ebe1;
+  --c-ink-2: #27231c;
+  --c-ink-soft: #a39a8b;
+  --c-line: rgba(240, 235, 225, 0.16);
+  --c-cream: #ede7db;
+  --c-cream-soft: #a79e8e;
+  --c-line-dark: rgba(237, 231, 219, 0.16);
+  /* the ink chapters sink below the page so the rhythm survives */
+  --c-ink-surface: #080807;
+  --c-on-ink: #080807;
+  --c-vermilion: #ff5c33;
+  --c-highlight: #ffd166;
+  --c-cursor-dot: #f0ebe1;
+  --c-cursor-dot-light: #ede7db;
+  --c-cursor-ring: rgba(240, 235, 225, 0.45);
+  --c-cursor-ring-light: rgba(237, 231, 219, 0.65);
+  --c-grain-blend: overlay;
+  --c-grain-opacity: 0.35;
+
+  color-scheme: dark;
+}
+
+/* Type & motion tokens are static — kept in a normal theme block. */
+@theme {
   --font-display: "Fraunces Variable", "Georgia", serif;
   --font-sans: "Space Grotesk Variable", "Helvetica Neue", sans-serif;
   --font-mono: "JetBrains Mono Variable", "SFMono-Regular", monospace;
 
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Colour tokens are wired to the runtime palette above. */
+@theme inline {
+  --color-paper: var(--c-paper);
+  --color-paper-2: var(--c-paper-2);
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-soft: var(--c-ink-soft);
+  --color-line: var(--c-line);
+  --color-cream: var(--c-cream);
+  --color-cream-soft: var(--c-cream-soft);
+  --color-line-dark: var(--c-line-dark);
+  --color-ink-surface: var(--c-ink-surface);
+  --color-on-ink: var(--c-on-ink);
+  --color-vermilion: var(--c-vermilion);
+  --color-highlight: var(--c-highlight);
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -31,23 +106,65 @@
   }
 
   body {
-    background-color: var(--color-paper);
-    color: var(--color-ink);
+    background-color: var(--c-paper);
+    color: var(--c-ink);
     font-family: var(--font-sans);
     font-weight: 400;
     line-height: 1.65;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition:
+      background-color 0.45s var(--ease-editorial),
+      color 0.45s var(--ease-editorial);
+  }
+
+  /* The theme switch is a re-paint of the whole surface, so text, ground
+     and hairlines cross-fade together instead of snapping. `:where()` keeps
+     the rule at zero specificity — any Tailwind transition utility wins. */
+  :where(
+    body,
+    h1,
+    h2,
+    h3,
+    h4,
+    p,
+    span,
+    a,
+    li,
+    ul,
+    ol,
+    dl,
+    dt,
+    dd,
+    figcaption,
+    figure,
+    button,
+    input,
+    textarea,
+    select,
+    label,
+    section,
+    footer,
+    header,
+    nav,
+    main,
+    div
+  ) {
+    transition:
+      color 0.45s var(--ease-editorial),
+      background-color 0.45s var(--ease-editorial),
+      border-color 0.45s var(--ease-editorial),
+      fill 0.45s var(--ease-editorial);
   }
 
   ::selection {
-    background: var(--color-vermilion);
-    color: var(--color-paper);
+    background: var(--c-vermilion);
+    color: var(--c-paper);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-vermilion);
+    outline: 2px solid var(--c-vermilion);
     outline-offset: 3px;
     border-radius: 2px;
   }
@@ -103,15 +220,22 @@
     height: 200%;
     pointer-events: none;
     z-index: 80;
-    opacity: 0.32;
+    opacity: var(--c-grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 220px 220px;
-    mix-blend-mode: multiply;
+    mix-blend-mode: var(--c-grain-blend);
     animation: grain-shift 9s steps(6) infinite;
+    transition:
+      opacity 0.45s var(--ease-editorial),
+      filter 0.45s var(--ease-editorial);
   }
   .grain-overlay.on-ink {
     mix-blend-mode: screen;
     opacity: 0.1;
+  }
+  /* On the dark ground the noise needs more bite to read as film grain. */
+  [data-theme="dark"] .grain-overlay {
+    filter: contrast(1.5);
   }
 
   /* Marquee */
@@ -151,8 +275,8 @@
   .marker-sweep {
     background-image: linear-gradient(
       to top,
-      color-mix(in srgb, var(--color-highlight) 85%, transparent) 0%,
-      color-mix(in srgb, var(--color-highlight) 85%, transparent) 42%,
+      color-mix(in srgb, var(--c-highlight) 85%, transparent) 0%,
+      color-mix(in srgb, var(--c-highlight) 85%, transparent) 42%,
       transparent 42%
     );
     background-repeat: no-repeat;
@@ -169,10 +293,36 @@
     overflow: hidden;
   }
 
+  /* Portrait plate — the cut-out sits on the frame's own ground, so a
+     gentle print grade keeps skin and paper in the same family. */
+  .portrait-plate {
+    background: var(--c-plate);
+    width: 100%;
+    aspect-ratio: 4 / 5;
+  }
+  /* From lg up the plate is sized from the *viewport height* instead of the
+     width: the figure, its caption and the scroll hint then always land
+     inside the first screen, whatever the laptop. The width follows the
+     height through the 4:5 ratio, so the two never drift apart. */
+  @media (min-width: 1024px) {
+    .portrait-plate {
+      --plate-h: clamp(210px, 31svh, 330px);
+      height: var(--plate-h);
+      width: calc(var(--plate-h) * 0.8);
+      aspect-ratio: auto;
+    }
+  }
+  .portrait-plate img {
+    filter: saturate(0.95) contrast(1.03) sepia(0.06);
+  }
+  [data-theme="dark"] .portrait-plate img {
+    filter: saturate(0.88) contrast(1.05) brightness(0.96) sepia(0.04);
+  }
+
   /* Hairline grid cells for the bento toolkit */
   .bento-cell {
-    border: 1px solid var(--color-line);
-    background: var(--color-paper-2);
+    border: 1px solid var(--c-line);
+    background: var(--c-paper-2);
     transition:
       transform 0.5s var(--ease-editorial),
       box-shadow 0.5s var(--ease-editorial),
@@ -180,14 +330,14 @@
   }
   .bento-cell:hover {
     transform: translateY(-4px);
-    border-color: color-mix(in srgb, var(--color-ink) 40%, transparent);
-    box-shadow: 6px 6px 0 0 color-mix(in srgb, var(--color-vermilion) 90%, transparent);
+    border-color: color-mix(in srgb, var(--c-ink) 40%, transparent);
+    box-shadow: 6px 6px 0 0 color-mix(in srgb, var(--c-vermilion) 90%, transparent);
   }
 
   /* Ink-chapter card art frame */
   .art-frame {
     overflow: hidden;
-    background: var(--color-paper);
+    background: var(--c-paper);
   }
   .art-frame img {
     transition: transform 0.9s var(--ease-editorial), filter 0.6s ease;
@@ -206,7 +356,7 @@
     gap: 0.6rem;
     overflow: hidden;
     isolation: isolate;
-    border: 1px solid var(--color-ink);
+    border: 1px solid var(--c-ink);
     padding: 0.85rem 1.7rem;
     font-family: var(--font-mono);
     font-size: 0.72rem;
@@ -216,8 +366,8 @@
     transition: color 0.35s ease, border-color 0.35s ease;
   }
   .btn-ink {
-    background: var(--color-ink);
-    color: var(--color-paper);
+    background: var(--c-ink);
+    color: var(--c-paper);
   }
   .btn-ink::before,
   .btn-paper::before {
@@ -225,34 +375,36 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: var(--color-vermilion);
+    background: var(--c-vermilion);
     transform: translateY(101%);
     transition: transform 0.45s var(--ease-editorial);
   }
   .btn-paper {
     background: transparent;
-    color: var(--color-ink);
+    color: var(--c-ink);
   }
   .btn-ink:hover,
   .btn-paper:hover {
-    color: var(--color-paper);
-    border-color: var(--color-vermilion);
+    color: var(--c-paper);
+    border-color: var(--c-vermilion);
   }
   .btn-ink:hover::before,
   .btn-paper:hover::before {
     transform: translateY(0);
   }
+  /* On the ink chapters the button is an outline that fills with cream —
+     the label then has to be the colour of the surface it sits on. */
   .btn-on-ink {
-    border-color: var(--color-cream);
-    color: var(--color-cream);
+    border-color: var(--c-cream);
+    color: var(--c-cream);
     background: transparent;
   }
   .btn-on-ink:hover {
-    color: var(--color-ink);
-    border-color: var(--color-vermilion);
+    color: var(--c-on-ink);
+    border-color: var(--c-vermilion);
   }
   .btn-on-ink::before {
-    background: var(--color-cream);
+    background: var(--c-cream);
   }
   .btn-on-ink:hover::before {
     transform: translateY(0);
@@ -263,19 +415,19 @@
     width: 100%;
     background: transparent;
     border: 0;
-    border-bottom: 1px solid var(--color-line-dark);
+    border-bottom: 1px solid var(--c-line-dark);
     padding: 0.85rem 0;
-    color: var(--color-cream);
+    color: var(--c-cream);
     font-size: 1rem;
     font-family: var(--font-sans);
     transition: border-color 0.3s ease;
   }
   .field-ink::placeholder {
-    color: color-mix(in srgb, var(--color-cream-soft) 70%, transparent);
+    color: color-mix(in srgb, var(--c-cream-soft) 70%, transparent);
   }
   .field-ink:focus {
     outline: none;
-    border-color: var(--color-vermilion);
+    border-color: var(--c-vermilion);
   }
 
   /* Certificate stamp rotate on hover */
@@ -284,6 +436,23 @@
   }
   .group:hover .stamp-tilt {
     transform: rotate(-8deg) scale(1.06);
+  }
+
+  /* Custom cursor inks — theme aware, set by the cursor component */
+  .cursor-dot {
+    background-color: var(--c-cursor-dot);
+  }
+  .cursor-dot.is-light {
+    background-color: var(--c-cursor-dot-light);
+  }
+  .cursor-ring {
+    border-color: var(--c-cursor-ring);
+  }
+  .cursor-ring.is-light {
+    border-color: var(--c-cursor-ring-light);
+  }
+  .cursor-ring.is-link {
+    border-color: var(--c-vermilion);
   }
 }
 

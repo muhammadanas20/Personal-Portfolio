@@ -16,6 +16,16 @@ typography, risograph artwork and motion with intent. Design system & concept bo
 - **Artwork** — project covers are a bespoke risograph illustration series generated
   for this redesign (no stock, no placeholders)
 
+## Light & dark
+- Two full themes — **paper** (default) and **charcoal** — driven by one attribute
+  (`<html data-theme="…">`) and a runtime palette of CSS custom properties
+- The toggle lives in the header (and in the mobile menu); the choice is stored in
+  `localStorage` and the OS `prefers-color-scheme` is honoured until you pick a side
+- An inline script in `index.html` applies the theme before first paint — no flash
+- `color-scheme` and `<meta name="theme-color">` follow the active theme, so the
+  address bar, form controls and scrollbars match
+- The grain, the ink seals, the custom cursor and every hairline re-tint with it
+
 ## Chapters
 `00 Hero → ticker → 01 About → 02 Toolkit → 03 Selected Work → 04 Education →
 05 Honors → 06 Contact → Footer`
@@ -24,10 +34,11 @@ typography, risograph artwork and motion with intent. Design system & concept bo
 ```
 src/
 ├── components/     # cursor, marquee, magnetic, reveal/mask-lines, scramble,
-│                   # seal, section-heading, scroll-progress
+│                   # seal, section-heading, scroll-progress, theme-toggle
 ├── lay/            # navbar (full-screen ink mobile menu), footer
 ├── sections/       # hero, about, toolkit, projects, education, achievements, contact
 ├── lib/scroll.js   # Lenis smooth scroll + anchor travelling
+├── lib/theme.jsx   # theme engine (provider, hook, storage, system preference)
 ├── App.jsx         # composition
 └── index.css       # design tokens & editorial component styles (Tailwind v4)
 ```
@@ -41,6 +52,7 @@ Fontsource variable fonts · Lucide icons · EmailJS contact form
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build → dist/
+npm run test:theme # headless check of the theme engine (jsdom)
 ```
 Contact form needs EmailJS keys in `.env`:
 `VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, `VITE_EMAILJS_PUBLIC_KEY`.

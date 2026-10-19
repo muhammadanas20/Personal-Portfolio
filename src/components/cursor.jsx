@@ -10,6 +10,9 @@ import { useEffect, useRef, useState } from "react";
  * - over text fields the custom cursor steps aside so the native I-beam works
  * - disappears when the pointer leaves the window, disabled on touch or
  *   reduced motion, and restores the native cursor on unmount
+ *
+ * The inks live in CSS (`.cursor-dot` / `.cursor-ring`) so the cursor
+ * re-tints itself with the active theme — no JS colour constants.
  */
 const supportsCursor = () =>
   typeof window !== "undefined" &&
@@ -19,12 +22,6 @@ const supportsCursor = () =>
 const INTERACTIVE = "a, button, [role='button'], [data-cursor='link'], summary";
 const TEXT_FIELD = "input, textarea, select, [contenteditable='true']";
 const LIGHT_SURFACE = "[data-cursor-light]";
-
-const INK = "#1a1610";
-const CREAM = "#ede7db";
-const VERMILION = "#ef4b22";
-const RING_INK = "rgba(26, 22, 16, 0.5)";
-const RING_CREAM = "rgba(237, 231, 219, 0.7)";
 
 export const Cursor = () => {
   const dotRef = useRef(null);
@@ -57,12 +54,10 @@ export const Cursor = () => {
       dot.style.opacity = visible ? "1" : "0";
       ring.style.opacity = visible ? "1" : "0";
 
-      dot.style.backgroundColor = onLight ? CREAM : INK;
-      if (overLink) {
-        ring.style.borderColor = VERMILION;
-      } else {
-        ring.style.borderColor = onLight ? RING_CREAM : RING_INK;
-      }
+      // theme-aware inks live in CSS — flip the state classes only
+      dot.classList.toggle("is-light", onLight);
+      ring.classList.toggle("is-light", onLight);
+      ring.classList.toggle("is-link", overLink);
     };
 
     const render = (time) => {
@@ -148,14 +143,14 @@ export const Cursor = () => {
         ref={dotRef}
         aria-hidden="true"
         data-cursor-dot=""
-        className="pointer-events-none fixed left-0 top-0 z-[90] h-[6px] w-[6px] rounded-full opacity-0"
+        className="cursor-dot pointer-events-none fixed left-0 top-0 z-[90] h-[6px] w-[6px] rounded-full opacity-0"
         style={{ transition: "opacity .25s ease, background-color .25s ease", willChange: "transform" }}
       />
       <span
         ref={ringRef}
         aria-hidden="true"
         data-cursor-ring=""
-        className="pointer-events-none fixed left-0 top-0 z-[90] h-[34px] w-[34px] rounded-full border opacity-0"
+        className="cursor-ring pointer-events-none fixed left-0 top-0 z-[90] h-[34px] w-[34px] rounded-full border opacity-0"
         style={{
           transition: "opacity .25s ease, border-color .25s ease",
           willChange: "transform",

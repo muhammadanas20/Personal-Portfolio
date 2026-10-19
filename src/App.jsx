@@ -10,6 +10,7 @@ import { Contact } from "@/sections/contact";
 import { Marquee } from "@/components/marquee";
 import { Cursor } from "@/components/cursor";
 import { ScrollProgress } from "@/components/scroll-progress";
+import { ThemeProvider } from "@/lib/theme-provider";
 
 const tickerItems = [
   "Full-Stack Development",
@@ -23,27 +24,29 @@ const tickerItems = [
 ];
 
 const App = () => (
-  <div className="relative">
-    {/* film grain over everything */}
-    <div className="grain-overlay" aria-hidden="true" />
+  <ThemeProvider>
+    <div className="relative">
+      {/* film grain over everything */}
+      <div className="grain-overlay" aria-hidden="true" />
 
-    <ScrollProgress />
-    <Cursor />
-    <Navbar />
+      <ScrollProgress />
+      <Cursor />
+      <Navbar />
 
-    <main id="main">
-      <Hero />
-      <Marquee items={tickerItems} />
-      <About />
-      <Toolkit />
-      <Projects />
-      <Education />
-      <Achievements />
-      <Contact />
-    </main>
+      <main id="main">
+        <Hero />
+        <Marquee items={tickerItems} />
+        <About />
+        <Toolkit />
+        <Projects />
+        <Education />
+        <Achievements />
+        <Contact />
+      </main>
 
-    <Footer />
-  </div>
+      <Footer />
+    </div>
+  </ThemeProvider>
 );
 
 export default App;

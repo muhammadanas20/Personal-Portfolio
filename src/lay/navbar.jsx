@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { scrollToId } from "@/lib/scroll";
 import { Magnetic } from "@/components/magnetic";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
   { href: "#about", label: "About", index: "01" },
@@ -90,6 +91,7 @@ export const Navbar = () => {
                 {link.label}
               </a>
             ))}
+            <ThemeToggle />
             <Magnetic>
               <a
                 href="#contact"
@@ -103,23 +105,26 @@ export const Navbar = () => {
           </div>
 
           {/* Mobile trigger */}
-          <button
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            className="relative z-[96] grid h-11 w-11 -mr-2 place-items-center lg:hidden"
-          >
-            <span
-              className={`absolute w-6 h-[1.5px] bg-current transition-transform duration-300 ${
-                open ? "rotate-45 text-cream" : "-translate-y-[5px] text-ink"
-              }`}
-            />
-            <span
-              className={`absolute w-6 h-[1.5px] bg-current transition-transform duration-300 ${
-                open ? "-rotate-45 text-cream" : "translate-y-[5px] text-ink"
-              }`}
-            />
-          </button>
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle className="h-11 w-11" />
+            <button
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              className="relative z-[96] grid h-11 w-11 -mr-2 place-items-center"
+            >
+              <span
+                className={`absolute w-6 h-[1.5px] bg-current transition-transform duration-300 ${
+                  open ? "rotate-45 text-cream" : "-translate-y-[5px] text-ink"
+                }`}
+              />
+              <span
+                className={`absolute w-6 h-[1.5px] bg-current transition-transform duration-300 ${
+                  open ? "-rotate-45 text-cream" : "translate-y-[5px] text-ink"
+                }`}
+              />
+            </button>
+          </div>
         </nav>
       </header>
 
@@ -132,7 +137,7 @@ export const Navbar = () => {
             exit={{ clipPath: "inset(0 0 100% 0)" }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             data-cursor-light
-            className="fixed inset-0 z-[95] flex flex-col justify-between bg-ink px-6 pt-24 pb-10 text-cream lg:hidden"
+            className="fixed inset-0 z-[95] flex flex-col justify-between bg-ink-surface px-6 pt-24 pb-10 text-cream lg:hidden"
           >
             <nav className="flex flex-col gap-1">
               {navLinks.map((link, i) => (
@@ -170,20 +175,21 @@ export const Navbar = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="flex items-end justify-between"
+              className="flex items-end justify-between gap-6"
             >
               <div className="meta-label text-cream-soft leading-loose">
                 Karachi, PK
                 <br />
                 open for internships
               </div>
-              <div className="flex gap-5 meta-label">
+              <div className="flex items-center gap-5 meta-label">
                 <a href="https://github.com/muhammadanas20" target="_blank" rel="noreferrer" className="link-draw">
                   GitHub
                 </a>
                 <a href="https://www.linkedin.com/in/muhammadanas20/" target="_blank" rel="noreferrer" className="link-draw">
                   LinkedIn
                 </a>
+                <ThemeToggle variant="ink" />
               </div>
             </motion.div>
           </motion.div>

@@ -20,7 +20,7 @@ export const Footer = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer data-cursor-light className="bg-ink text-cream border-t border-line-dark">
+    <footer data-cursor-light className="bg-ink-surface text-cream border-t border-line-dark">
       <div className="mx-auto max-w-[1200px] px-5 sm:px-8 pt-16 sm:pt-20 pb-8">
         <Reveal>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -66,7 +66,7 @@ export const Footer = () => {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={s.label}
-                className="w-10 h-10 grid place-items-center border border-line-dark rounded-full text-cream-soft hover:text-ink hover:bg-cream hover:border-cream transition-colors duration-300"
+                className="w-10 h-10 grid place-items-center border border-line-dark rounded-full text-cream-soft hover:text-on-ink hover:bg-cream hover:border-cream transition-colors duration-300"
               >
                 <s.icon className="w-4 h-4" aria-hidden="true" />
               </a>
