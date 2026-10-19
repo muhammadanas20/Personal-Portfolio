@@ -1,280 +1,200 @@
-import React, { useEffect, useState } from "react";
-import { Award, Trophy, Calendar, Eye, X, ExternalLink } from "lucide-react";
-import { TiltedCard } from "@/components/tilted-card";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { X, ArrowUpRight, ExternalLink } from "lucide-react";
+import { SectionHeading } from "@/components/section-heading";
+import { Reveal, MaskLines } from "@/components/reveal";
 
 const achievements = [
   {
     title: "Dean's List of Honors",
-    issuer: "National University of Computer & Emerging Sciences",
+    issuer: "FAST NUCES",
     date: "Fall 2025",
+    badge: "Honor",
     description:
-      "Inscribed in the Dean's List of Honors in recognition of outstanding academic achievements and GPA excellence during the Fall 2025 semester at FAST-NU.",
+      "Inscribed in the Dean's List of Honors for GPA excellence and outstanding academic standing during the Fall 2025 semester.",
     image: "/achievements/deans_list_2025.jpg",
-    tags: ["Academic Excellence", "FAST-NU", "GPA Honor"],
-    color: "#00d9ff", // cyan
-    badgeText: "DEAN'S LIST",
-    icon: Award,
+    tags: ["Academic Excellence", "GPA Honor"],
   },
   {
     title: "ACM Coders Cup 2025",
-    issuer: "ACM NUCES Karachi Chapter",
+    issuer: "ACM NUCES Karachi",
     date: "Jan 2026",
+    badge: "Finalist",
     description:
-      "Successfully navigated the initial rounds to reach the Final Round representing team 'Furious 3' in the ACM Coders Cup 2025, a premier competitive programming event.",
+      "Cleared the preliminary rounds and reached the final round representing team “Furious 3” in the chapter's premier competitive-programming contest.",
     image: "/achievements/coders_cup_2025.jpg",
     tags: ["Competitive Programming", "C++", "Teamwork"],
-    color: "#9d4edd", // purple
-    badgeText: "FINALIST",
-    icon: Trophy,
   },
   {
     title: "Developers' Day 2026",
-    issuer: "ACM NUCES Karachi Chapter",
+    issuer: "ACM NUCES Karachi",
     date: "May 2026",
+    badge: "Contestant",
     description:
-      "Competed in the competitive programming track, solving complex algorithmic problems using C++, Data Structures, and logic optimization under tight time constraints.",
+      "Competed in the competitive-programming track — algorithms, data structures and logic optimization under a hard clock.",
     image: "/achievements/dev_day_2026.jpg",
-    tags: ["Data Structures", "Algorithms", "Problem Solving"],
-    color: "#00d9ff", // cyan
-    badgeText: "PARTICIPANT",
-    icon: Trophy,
+    tags: ["Data Structures", "Algorithms"],
   },
 ];
 
 export const Achievements = () => {
-  const [selectedCert, setSelectedCert] = useState(null);
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    achievements.forEach((ach) => {
-      const img = new Image();
-      img.src = ach.image;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCert) return;
+    if (!selected) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e) => {
-      if (e.key === "Escape") setSelectedCert(null);
-    };
+    const onKey = (e) => e.key === "Escape" && setSelected(null);
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [selectedCert]);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const ctx = gsap.context(() => {
-      // Header animation
-      gsap.from(".achievements-header", {
-        scrollTrigger: {
-          trigger: ".achievements-section",
-          start: "top 85%",
-        },
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-
-      // Cards stagger animation
-      gsap.from(".achievements-card-wrapper", {
-        scrollTrigger: {
-          trigger: ".achievements-grid",
-          start: "top 85%",
-        },
-        y: 50,
-        opacity: 0,
-        duration: 0.9,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
+  }, [selected]);
 
   return (
-    <section id="achievements" className="achievements-section py-20 md:py-24 relative overflow-hidden bg-[#070911]">
-      {/* Glow backgrounds */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#070911_100%)] pointer-events-none" />
-      <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#9d4edd]/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-[#00d9ff]/5 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="container mx-auto px-6 relative z-10">
-        
-        {/* Section Header */}
-        <div className="achievements-header text-center mx-auto max-w-3xl mb-20">
-          <span className="text-[#00d9ff] text-xs font-mono tracking-widest uppercase bg-[#00d9ff]/10 border border-[#00d9ff]/30 px-3 py-1 rounded-md">
-            HALL_OF_FAME //
-          </span>
-          <h2 className="text-4xl md:text-5xl font-extrabold mt-4 mb-6 text-white">
-            Honors & <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9d4edd] to-[#00d9ff]">
-              Achievements.
-            </span>
-          </h2>
-          <p className="text-sm sm:text-base text-[#8f9bb3] leading-relaxed">
-            Key milestones, competitive programming successes, and academic awards representing dedication, problem-solving, and continuous learning.
-          </p>
+    <section id="honors" className="py-24 sm:py-32 border-t border-line bg-paper-2/60">
+      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14 sm:mb-20">
+          <SectionHeading
+            index="05"
+            kicker="Honors"
+            lines={
+              <MaskLines
+                lines={[
+                  "Stamps in",
+                  <span key="2">
+                    the <span className="display-wonk text-vermilion">margin.</span>
+                  </span>,
+                ]}
+              />
+            }
+          />
+          <Reveal delay={0.15}>
+            <p className="text-sm sm:text-base text-ink-soft max-w-xs leading-relaxed md:text-right">
+              Academic honors and contest finals — small proofs that the late nights
+              compiled.
+            </p>
+          </Reveal>
         </div>
 
-        {/* Achievements Grid */}
-        <div className="achievements-grid grid md:grid-cols-3 gap-8">
-          {achievements.map((ach, idx) => {
-            const Icon = ach.icon;
-            return (
-              <TiltedCard key={idx} className="achievements-card-wrapper w-full h-full">
-                <div className="skeuo-panel border border-[#2e344e] flex flex-col h-full group p-6 justify-between relative">
-                  
-                  {/* Metal screws on top corner */}
-                  <div className="absolute top-3 left-3"><div className="screw-head" /></div>
-                  <div className="absolute top-3 right-3"><div className="screw-head" /></div>
+        <div className="grid md:grid-cols-3 gap-5 sm:gap-6">
+          {achievements.map((a, i) => (
+            <Reveal key={a.title} delay={i * 0.08} y={32}>
+              <article className="group h-full border border-line bg-paper-2 flex flex-col">
+                {/* certificate plate */}
+                <button
+                  onClick={() => setSelected(a)}
+                  className="relative block text-left art-frame aspect-[4/3] border-b border-line w-full"
+                  aria-label={`View certificate: ${a.title}`}
+                >
+                  <img
+                    src={a.image}
+                    alt={`Certificate — ${a.title}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="stamp-tilt absolute top-3 right-3 w-16 h-16 rounded-full bg-vermilion text-paper grid place-items-center text-center font-mono uppercase tracking-[0.14em] text-[8px] font-semibold leading-tight rotate-6">
+                    {a.badge}
+                  </span>
+                </button>
 
-                  <div className="space-y-6">
-                    {/* Header: Icon & LED */}
-                    <div className="flex items-center justify-between mt-4">
-                      {/* Beveled Icon Slot */}
-                      <div className="w-12 h-12 rounded-xl bg-[#0c0d18] border border-[#20253d] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] flex items-center justify-center">
-                        <Icon className="w-5 h-5" style={{ color: ach.color }} />
-                      </div>
-                      
-                      {/* Interactive status LED */}
-                      <div className="flex items-center gap-2 bg-black/40 px-2.5 py-1 rounded-md border border-[#1b1f32]">
-                        <span className={`led-indicator active ${ach.color === "#9d4edd" ? "led-purple" : "led-cyan"}`} />
-                        <span className="text-[9px] font-mono text-white/80 tracking-wider font-bold">
-                          {ach.badgeText}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-xl font-bold text-white group-hover:text-[#00d9ff] transition-colors duration-200">
-                          {ach.title}
-                        </h3>
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5 text-xs text-[#7b68be] font-mono font-semibold">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{ach.date}</span>
-                      </div>
-
-                      <p className="text-xs font-mono text-[#8f9bb3] leading-relaxed border-l-2 border-[#1b1f32] pl-3 py-1">
-                        {ach.issuer}
-                      </p>
-
-                      <p className="text-xs sm:text-sm text-[#8f9bb3]/90 leading-relaxed pt-2">
-                        {ach.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 space-y-4">
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-[#1b1f32]">
-                      {ach.tags.map((tag, tagIdx) => (
-                        <span
-                          key={tagIdx}
-                          className="px-2.5 py-1 bg-[#121424] border border-[#232946] rounded-md text-[9px] font-mono font-bold text-[#8f9bb3] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:text-[#00d9ff] transition-colors"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Interactive Button */}
-                    <button
-                      onClick={() => setSelectedCert(ach)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider text-white tactile-button-3d mt-2 cursor-pointer"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>View Certificate</span>
-                    </button>
-                  </div>
-
-                  {/* Corner screws bottom */}
-                  <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
-                  <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
+                <div className="p-6 flex flex-col grow">
+                  <p className="meta-label text-ink-soft">
+                    {a.issuer} · {a.date}
+                  </p>
+                  <h3 className="mt-2 font-display text-2xl font-medium tracking-tight text-ink">
+                    {a.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-soft grow">
+                    {a.description}
+                  </p>
+                  <ul className="mt-4 flex flex-wrap gap-2">
+                    {a.tags.map((t) => (
+                      <li
+                        key={t}
+                        className="px-2.5 py-1 border border-line rounded-full text-[11px] font-mono tracking-wide text-ink-soft"
+                      >
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => setSelected(a)}
+                    className="mt-6 self-start meta-label text-ink link-draw flex items-center gap-2"
+                  >
+                    view certificate
+                    <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
                 </div>
-              </TiltedCard>
-            );
-          })}
+              </article>
+            </Reveal>
+          ))}
         </div>
       </div>
 
-      {/* CRT Diagnostic Screen Lightbox Modal */}
-      {selectedCert && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-modal-in"
-          onClick={() => setSelectedCert(null)}
-        >
-          {/* Outer Console Shell */}
-          <div
-            className="relative w-full max-w-4xl max-h-[92vh] flex flex-col skeuo-panel-glow border border-[#9d4edd]/40 p-5 md:p-6 bg-[#0c0e18] shadow-[0_0_50px_rgba(157,78,221,0.2)] overflow-y-auto animate-modal-panel-in"
-            onClick={(e) => e.stopPropagation()}
+      {/* Lightbox */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setSelected(null)}
+            className="fixed inset-0 z-[98] bg-ink/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
+            role="dialog"
+            aria-modal="true"
+            aria-label={selected.title}
           >
-            
-            {/* Console Frame detailing */}
-            <div className="absolute top-3 left-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
-              <span className="text-[9px] font-mono text-[#9d4edd] tracking-widest font-bold">SYSTEM_PREVIEW_ON_CRT</span>
-            </div>
-
-            <button
-              onClick={() => setSelectedCert(null)}
-              className="absolute top-3 right-4 text-[#8f9bb3] hover:text-white transition-colors p-1 bg-[#1a1c2e] hover:bg-[#9d4edd]/20 border border-[#2e344e] rounded-md active:scale-95 cursor-pointer"
+            <motion.div
+              initial={{ y: 34, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 20, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-3xl bg-paper border border-line p-4 sm:p-6 max-h-[92vh] overflow-y-auto"
             >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* CRT monitor bezel & inner display screen */}
-            <div className="mt-4 skeuo-inset-screen border-4 border-[#1c2035] rounded-xl overflow-hidden aspect-[4/3] md:aspect-video flex items-center justify-center bg-[#03050a] shadow-[inset_0_0_40px_rgba(0,0,0,1)] max-h-[52vh] w-full flex-shrink-0">
-              {/* Bezel glare effect */}
-              <div className="glare-overlay opacity-50 pointer-events-none" />
-              
-              {/* Scanlines / CRT details */}
-              <img
-                src={selectedCert.image}
-                alt={selectedCert.title}
-                className="max-w-full max-h-full object-contain p-2 md:p-4 z-10 select-none pointer-events-none relative"
-              />
-            </div>
-
-            {/* CRT Screen Metadata panel footer */}
-            <div className="mt-6 border-t border-[#1c2035] pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00d9ff] led-indicator active" />
-                  {selectedCert.title}
-                </h4>
-                <p className="text-xs font-mono text-[#8f9bb3] mt-1">{selectedCert.issuer} // {selectedCert.date}</p>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <p className="meta-label text-ink-soft">
+                    {selected.issuer} · {selected.date}
+                  </p>
+                  <h3 className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-ink">
+                    {selected.title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  aria-label="Close certificate viewer"
+                  className="w-10 h-10 shrink-0 grid place-items-center border border-line text-ink hover:bg-ink hover:text-paper transition-colors"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
               </div>
 
-              <a
-                href={selectedCert.image}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-[#121424] border border-[#232946] text-xs font-mono font-bold text-[#00d9ff] hover:text-white hover:border-[#00d9ff] rounded-md transition-colors shadow-inner self-stretch md:self-auto text-center justify-center cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open Raw Image</span>
-              </a>
-            </div>
+              <img
+                src={selected.image}
+                alt={`Certificate — ${selected.title}`}
+                className="w-full border border-line bg-paper-2"
+              />
 
-            {/* Screws bottom corners */}
-            <div className="absolute bottom-2 left-4"><div className="screw-head" /></div>
-            <div className="absolute bottom-2 right-4"><div className="screw-head" /></div>
-          </div>
-        </div>
-      )}
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm text-ink-soft max-w-md">{selected.description}</p>
+                <a
+                  href={selected.image}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-paper py-2.5 px-4 self-start sm:self-auto"
+                >
+                  open original
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
