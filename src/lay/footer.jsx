@@ -1,5 +1,7 @@
-import React from "react";
-import { Github, Linkedin, Instagram } from "lucide-react";
+import { ArrowUp, Github, Linkedin, Instagram } from "lucide-react";
+import { Reveal } from "@/components/reveal";
+import { scrollToId } from "@/lib/scroll";
+import { Magnetic } from "@/components/magnetic";
 
 const socialLinks = [
   { icon: Github, href: "https://github.com/muhammadanas20", label: "GitHub" },
@@ -9,60 +11,75 @@ const socialLinks = [
 
 const footerLinks = [
   { href: "#about", label: "About" },
-  { href: "#projects", label: "Projects" },
+  { href: "#projects", label: "Work" },
   { href: "#education", label: "Education" },
   { href: "#contact", label: "Contact" },
 ];
 
 export const Footer = () => {
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="py-12 bg-[#070911] border-t border-[#1b1f32] relative">
-      {/* Decorative screws on footer deck */}
-      <div className="absolute top-4 left-6"><div className="screw-head" /></div>
-      <div className="absolute top-4 right-6"><div className="screw-head" /></div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Logo & Copyright */}
-          <div className="text-center md:text-left">
-            <a href="#" className="text-xl font-bold tracking-tight text-white hover:text-[#9d4edd] transition-colors">
-              ANAS<span className="text-[#9d4edd]">_</span>
-            </a>
-            <p className="text-[11px] font-mono text-[#5e6988] mt-2">
-              © {currentYear} MUHAMMAD ANAS. STABLE_BUILD v2.0
-            </p>
+    <footer className="bg-ink text-cream border-t border-line-dark">
+      <div className="mx-auto max-w-[1200px] px-5 sm:px-8 pt-16 sm:pt-20 pb-8">
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <h2 className="font-display font-medium tracking-[-0.02em] leading-[0.9] text-[clamp(2.6rem,8vw,6rem)]">
+              Muhammad&nbsp;Anas
+              <span className="display-wonk text-vermilion">.</span>
+            </h2>
+            <Magnetic>
+              <button
+                onClick={() => scrollToId("#")}
+                className="btn-on-ink btn-ink"
+                aria-label="Back to top"
+              >
+                Back to top
+                <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </Magnetic>
           </div>
+        </Reveal>
 
-          {/* Links */}
-          <nav className="flex flex-wrap justify-center gap-6">
+        <div className="mt-12 sm:mt-16 pt-6 border-t border-line-dark flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <nav className="flex flex-wrap gap-x-7 gap-y-3">
             {footerLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-xs font-mono uppercase tracking-wider text-[#8f9bb3] hover:text-white transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToId(link.href);
+                }}
+                className="meta-label text-cream-soft hover:text-cream link-draw transition-colors"
               >
                 {link.label}
               </a>
             ))}
           </nav>
 
-          {/* Social Links */}
-          <div className="flex items-center gap-3">
-            {socialLinks.map((social) => (
+          <div className="flex items-center gap-4">
+            {socialLinks.map((s) => (
               <a
-                key={social.label}
-                href={social.href}
-                aria-label={social.label}
+                key={s.label}
+                href={s.href}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg bg-[#0c0d18] border border-[#1c2035] flex items-center justify-center text-[#8f9bb3] hover:text-white hover:border-[#9d4edd] shadow-inner transition-all active:translate-y-[2px]"
+                aria-label={s.label}
+                className="w-10 h-10 grid place-items-center border border-line-dark rounded-full text-cream-soft hover:text-ink hover:bg-cream hover:border-cream transition-colors duration-300"
               >
-                <social.icon className="w-4 h-4" />
+                <s.icon className="w-4 h-4" aria-hidden="true" />
               </a>
             ))}
           </div>
+        </div>
+
+        <div className="mt-8 flex flex-col sm:flex-row justify-between gap-2 meta-label text-cream-soft/70">
+          <span>© {year} Muhammad Anas — printed on recycled pixels</span>
+          <span>
+            set in <span className="text-cream">Fraunces</span> &{" "}
+            <span className="text-cream">Space Grotesk</span> — Karachi, PK
+          </span>
         </div>
       </div>
     </footer>

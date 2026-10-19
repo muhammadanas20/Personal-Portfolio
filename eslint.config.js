@@ -23,7 +23,10 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // ^motion$ — framer-motion's JSX factory (<motion.div/>) is a member
+      // expression, which base no-unused-vars does not count as a reference.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 ])

@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from "react";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
-import { Button } from "@/components/button";
+import { useState } from "react";
+import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
 import emailjs from "@emailjs/browser";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SectionHeading } from "@/components/section-heading";
+import { Reveal, MaskLines } from "@/components/reveal";
+import { Seal } from "@/components/seal";
+import { Magnetic } from "@/components/magnetic";
 
 const contactInfo = [
   {
@@ -27,68 +21,25 @@ const contactInfo = [
   },
   {
     icon: MapPin,
-    label: "Location",
+    label: "Studio",
     value: "Karachi, Pakistan",
     href: "https://www.google.com/maps/place/Karachi",
   },
 ];
 
+const socials = [
+  ["GitHub", "https://github.com/muhammadanas20"],
+  ["LinkedIn", "https://www.linkedin.com/in/muhammadanas20/"],
+  ["Instagram", "https://www.instagram.com/_m._.anas_/"],
+];
+
 export const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState({
-    type: null, // 'success' or 'error'
-    message: "",
-  });
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    
-    const ctx = gsap.context(() => {
-      gsap.from(".contact-header", {
-        scrollTrigger: {
-          trigger: ".contact-section",
-          start: "top 85%",
-        },
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-
-      gsap.from(".contact-form-panel", {
-        scrollTrigger: {
-          trigger: ".contact-grid",
-          start: "top 80%",
-        },
-        x: -40,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-
-      gsap.from(".contact-info-panel", {
-        scrollTrigger: {
-          trigger: ".contact-grid",
-          start: "top 80%",
-        },
-        x: 40,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
+  const [submitStatus, setSubmitStatus] = useState({ type: null, message: "" });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setIsLoading(true);
     setSubmitStatus({ type: null, message: "" });
     try {
@@ -97,25 +48,19 @@ export const Contact = () => {
       const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
       if (!serviceId || !templateId || !publicKey) {
-        throw new Error(
-          "EmailJS configuration is missing. Please check your environment variables."
-        );
+        throw new Error("EmailJS configuration is missing. Please check your environment variables.");
       }
 
       await emailjs.send(
         serviceId,
         templateId,
-        {
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
-        },
+        { name: formData.name, email: formData.email, message: formData.message },
         publicKey
       );
 
       setSubmitStatus({
         type: "success",
-        message: "Message sent successfully! I'll get back to you soon.",
+        message: "Message sent — I'll write back within a day.",
       });
       setFormData({ name: "", email: "", message: "" });
     } catch (err) {
@@ -124,210 +69,163 @@ export const Contact = () => {
         type: "error",
         message:
           (err && (err.text || err.message)) ||
-          "Failed to send message. Please try again later.",
+          "Something misfired. Please try again, or mail me directly.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const set = (key) => (e) => setFormData({ ...formData, [key]: e.target.value });
+
   return (
-    <section id="contact" className="contact-section py-20 md:py-24 relative overflow-hidden bg-[#0a0c16]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0a0c16_100%)] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#9d4edd]/5 rounded-full blur-[100px] pointer-events-none" />
+    <section id="contact" className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-8 left-2 font-display display-wonk text-[clamp(6rem,16vw,14rem)] leading-none text-cream/[0.05]"
+      >
+        hello
+      </span>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        
-        {/* Section Header */}
-        <div className="contact-header text-center max-w-3xl mx-auto mb-20">
-          <span className="text-[#00d9ff] text-xs font-mono tracking-widest uppercase bg-[#00d9ff]/10 border border-[#00d9ff]/30 px-3 py-1 rounded-md">
-            COMMUNICATION //
-          </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold mt-4 mb-5 text-white">
-            Let's build <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9d4edd] to-[#00d9ff]">
-              something great.
-            </span>
-          </h2>
-          <p className="text-sm sm:text-base text-[#8f9bb3] leading-relaxed">
-            Have a project in mind? Send me a packet from the interface below, and let's configure something together.
-          </p>
-        </div>
+      <div className="mx-auto max-w-[1200px] px-5 sm:px-8 relative">
+        <SectionHeading
+          dark
+          index="06"
+          kicker="Contact"
+          className="mb-16 sm:mb-24"
+          lines={
+            <MaskLines
+              lines={[
+                "Let's make something",
+                <span key="2">
+                  worth <span className="display-wonk text-vermilion">reading.</span>
+                </span>,
+              ]}
+            />
+          }
+          lead="Internships, collaborations, impossible side-quests — my inbox is an open door. One paragraph is enough to start."
+        />
 
-        <div className="contact-grid grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto items-start">
-          
-          {/* Contact Form Panel */}
-          <div className="contact-form-panel skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
-            <div className="absolute top-3 left-3"><div className="screw-head" /></div>
-            <div className="absolute top-3 right-3"><div className="screw-head" /></div>
-            
-            <div className="mb-6 pb-4 border-b border-[#23273e] flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-wider text-[#7b68be]">MESSAGE_TRANSMITTER [TX_NODE]</span>
-              <div className="flex items-center gap-1.5">
-                <span className="led-indicator active led-cyan" />
-                <span className="text-[9px] font-mono text-white">TX_READY</span>
-              </div>
-            </div>
-
-            <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
-                >
-                  // Sender name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  placeholder="e.g. John Doe"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none text-sm sm:text-base transition-colors"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
-                >
-                  // Sender address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="e.g. john@example.com"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none text-sm sm:text-base transition-colors"
-                />
+        <div className="grid lg:grid-cols-12 gap-14 lg:gap-16">
+          {/* Form */}
+          <Reveal className="lg:col-span-7">
+            <form onSubmit={handleSubmit} className="space-y-8" noValidate={false}>
+              <div className="grid sm:grid-cols-2 gap-8">
+                <div>
+                  <label htmlFor="name" className="meta-label text-cream-soft block mb-1">
+                    Your name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    placeholder="Ada Lovelace"
+                    value={formData.name}
+                    onChange={set("name")}
+                    className="field-ink"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="meta-label text-cream-soft block mb-1">
+                    Your email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    placeholder="ada@analytical.engine"
+                    value={formData.email}
+                    onChange={set("email")}
+                    className="field-ink"
+                  />
+                </div>
               </div>
 
               <div>
-                <label
-                  htmlFor="message"
-                  className="block text-xs font-mono text-[#7b68be] tracking-wider mb-2 uppercase"
-                >
-                  // Message payload
+                <label htmlFor="message" className="meta-label text-cream-soft block mb-1">
+                  The idea
                 </label>
                 <textarea
                   id="message"
-                  rows={4}
                   required
+                  rows={5}
+                  placeholder="Tell me what we're building…"
                   value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  placeholder="Write your transmission here..."
-                  className="w-full px-4 py-3 text-white skeuo-inset border border-[#1c2035] focus:border-[#9d4edd] outline-none resize-none text-sm sm:text-base transition-colors"
+                  onChange={set("message")}
+                  className="field-ink resize-none"
                 />
               </div>
 
-              <Button
-                className="w-full flex items-center justify-center gap-2 py-3"
-                type="submit"
-                size="lg"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>Transmitting...</>
-                ) : (
-                  <>
-                    <span>Transmit Message</span>
-                    <Send className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-wrap items-center gap-6">
+                <Magnetic>
+                  <button type="submit" disabled={isLoading} className="btn-ink btn-on-ink disabled:opacity-60">
+                    {isLoading ? "Sending…" : "Send the letter"}
+                    <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </Magnetic>
 
-              {submitStatus.type && (
-                <div
-                  className={`flex items-center gap-3 p-4 rounded-xl border ${
-                    submitStatus.type === "success"
-                      ? "bg-green-500/10 border-green-500/20 text-green-400"
-                      : "bg-red-500/10 border-red-500/20 text-red-400"
-                  }`}
-                >
-                  {submitStatus.type === "success" ? (
-                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  )}
-                  <p className="text-xs sm:text-sm font-mono">{submitStatus.message}</p>
-                </div>
-              )}
-            </form>
-            
-            <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
-            <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
-          </div>
-
-          {/* Contact Info Panel */}
-          <div className="contact-info-panel space-y-6">
-            
-            {/* Info Cards Panel */}
-            <div className="skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
-              <div className="absolute top-3 left-3"><div className="screw-head" /></div>
-              <div className="absolute top-3 right-3"><div className="screw-head" /></div>
-              
-              <h3 className="text-lg font-bold text-white mb-6 pt-2">
-                System Terminals [NODE_ADDR]
-              </h3>
-              
-              <div className="space-y-4">
-                {contactInfo.map((item, i) => (
-                  <a
-                    key={i}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-4 p-3 bg-[#0d0f1a] border border-[#1b1f32] hover:border-[#9d4edd] rounded-xl shadow-inner group transition-all duration-200 active:translate-y-[1px]"
+                {submitStatus.type && (
+                  <p
+                    role="status"
+                    className={`flex items-center gap-2 text-sm ${
+                      submitStatus.type === "success" ? "text-highlight" : "text-vermilion"
+                    }`}
                   >
-                    {/* Beveled Icon socket */}
-                    <div className="w-12 h-12 rounded-xl bg-[#060810] border border-[#1c2035] flex items-center justify-center text-[#7b68be] group-hover:text-white transition-colors flex-shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-mono text-[#5e6988] tracking-widest uppercase">
-                        {item.label}
-                      </div>
-                      <div className="text-sm sm:text-base font-bold text-white group-hover:text-[#00d9ff] transition-colors truncate">
-                        {item.value}
-                      </div>
-                    </div>
-                  </a>
-                ))}
+                    {submitStatus.type === "success" ? (
+                      <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                    )}
+                    {submitStatus.message}
+                  </p>
+                )}
               </div>
+            </form>
+          </Reveal>
 
-              <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
-              <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
+          {/* Ledger */}
+          <Reveal delay={0.12} className="lg:col-span-5">
+            <div className="border-t border-line-dark">
+              {contactInfo.map((c) => (
+                <a
+                  key={c.label}
+                  href={c.href}
+                  target={c.href.startsWith("http") ? "_blank" : undefined}
+                  rel={c.href.startsWith("http") ? "noreferrer" : undefined}
+                  className="group flex items-center justify-between gap-4 py-5 border-b border-line-dark"
+                >
+                  <span className="flex items-center gap-4">
+                    <c.icon className="w-4 h-4 text-vermilion" aria-hidden="true" />
+                    <span className="meta-label text-cream-soft">{c.label}</span>
+                  </span>
+                  <span className="text-sm sm:text-base text-cream link-draw break-all text-right">
+                    {c.value}
+                  </span>
+                </a>
+              ))}
             </div>
 
-            {/* Availability Indicator Panel */}
-            <div className="skeuo-panel p-6 sm:p-8 border border-[#2e344e] relative">
-              <div className="absolute top-3 left-3"><div className="screw-head" /></div>
-              <div className="absolute top-3 right-3"><div className="screw-head" /></div>
-              
-              <div className="flex items-center gap-3 mb-4 pt-2">
-                <span className="w-2.5 h-2.5 bg-green-500 rounded-full led-indicator active" />
-                <span className="font-bold text-sm tracking-wider font-mono text-white">SYS_AVAILABILITY: OPEN</span>
-              </div>
-              <p className="text-xs sm:text-sm text-[#8f9bb3] leading-relaxed font-sans">
-                I'm currently seeking internships and junior roles where I can deploy my React, JavaScript, and programming logic skills. If you need a thorough and driven developer to optimize your system, initiate a transmission!
+            <div className="mt-8 flex items-center gap-6">
+              {socials.map(([label, href]) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="meta-label text-cream-soft hover:text-cream link-draw transition-colors"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+
+            <div className="mt-12 flex items-end justify-between gap-6">
+              <p className="text-sm text-cream-soft max-w-[220px] leading-relaxed">
+                Usually replies between lectures — Karachi time, GMT+5.
               </p>
-
-              <div className="absolute bottom-2 left-3"><div className="screw-head" /></div>
-              <div className="absolute bottom-2 right-3"><div className="screw-head" /></div>
+              <Seal dark size={104} className="shrink-0" />
             </div>
-
-          </div>
-          
+          </Reveal>
         </div>
       </div>
     </section>
