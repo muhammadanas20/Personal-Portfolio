@@ -12,7 +12,7 @@ const cursorSupported = () =>
 export const Cursor = () => {
   const dotRef = useRef(null);
   const ringRef = useRef(null);
-  const [enabled] = useState(cursorSupported);
+  const [enabled, setEnabled] = useState(cursorSupported);
 
   useEffect(() => {
     if (!enabled) return;
@@ -35,12 +35,17 @@ export const Cursor = () => {
     };
 
     const onOver = (e) => {
-      hovered = !!e.target.closest("a, button, [role='button'], input, textarea, [data-cursor]");
+      // Hide custom cursor when hovering over project images or other interactive elements
+      hovered =
+        !e.target.closest(
+          ".art-frame, .art-frame img, .project-image, [data-cursor-img]"
+        ) && !e.target.closest("a, button, [role='button'], input, textarea, [data-cursor]");
     };
 
     const loop = () => {
-      ring.x += (pos.x - ring.x) * 0.16;
-      ring.y += (pos.y - ring.y) * 0.16;
+      // Increased smoothing factor from 0.16 to 0.25 for reduced lag
+      ring.x += (pos.x - ring.x) * 0.25;
+      ring.y += (pos.y - ring.y) * 0.25;
       if (dotRef.current) {
         dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%) scale(${hovered ? 0 : 1})`;
       }

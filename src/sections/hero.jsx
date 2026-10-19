@@ -16,10 +16,10 @@ const roles = [
 ];
 
 export const Hero = () => (
-  <section id="top" className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 overflow-hidden">
+  <section id="top" className="relative pt-16 sm:pt-24 pb-8 sm:pb-16 overflow-hidden">
     <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
       {/* Top meta strip */}
-      <Reveal className="flex items-center justify-between meta-label text-ink-soft mb-10 sm:mb-16">
+      <Reveal className="flex items-center justify-between meta-label text-ink-soft mb-6 sm:mb-12">
         <span className="flex items-center gap-2.5">
           <span className="relative flex w-2 h-2">
             <span className="absolute inset-0 rounded-full bg-vermilion animate-ping opacity-60" />
@@ -48,7 +48,7 @@ export const Hero = () => (
       </h1>
 
       {/* Under the name: role / intro / portrait */}
-      <div className="mt-12 sm:mt-16 grid lg:grid-cols-12 gap-12 lg:gap-10 items-end">
+      <div className="mt-8 sm:mt-10 grid lg:grid-cols-12 gap-12 lg:gap-10 items-end">
         <div className="lg:col-span-7 space-y-7">
           <Reveal delay={0.1}>
             <p className="meta-label text-ink-soft">
@@ -119,7 +119,7 @@ export const Hero = () => (
       </div>
 
       {/* Scroll hint */}
-      <Reveal delay={0.5} className="mt-16 sm:mt-24 flex items-center gap-4 meta-label text-ink-soft">
+      <Reveal delay={0.5} className="mt-10 sm:mt-16 flex items-center gap-4 meta-label text-ink-soft">
         <span className="relative block w-px h-12 bg-line overflow-hidden">
           <motion.span
             className="absolute top-0 left-0 w-px h-4 bg-vermilion"
