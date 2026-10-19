@@ -27,6 +27,7 @@ Design principles:
 |--------------|----------------------|-----------------------------------------|
 | `paper`      | `#F2EEE7`            | Global background (light chapters)      |
 | `paper-2`    | `#FAF8F2`            | Cards, raised surfaces on paper         |
+| `plate`      | `#FAF8F2`            | Ground the portrait plate is printed on |
 | `ink`        | `#1A1610`            | Headings/body on paper; dark chapter bg |
 | `ink-soft`   | `#6E675A`            | Secondary text on paper                 |
 | `line`       | `rgba(26,22,16,.16)` | Hairline rules & borders on paper       |
@@ -37,6 +38,31 @@ Design principles:
 
 Contrast: ink on paper = 15.4:1 · cream on ink = 13.9:1 · vermilion on paper = 4.0:1
 (large type / graphics only) · ink-soft on paper = 5.3:1. WCAG AA across text.
+
+### 2.1 Dark theme
+
+Every colour lives in a runtime custom property (`--c-*`); Tailwind reads them through
+`@theme inline`, so `<html data-theme="dark">` re-tints the whole site with one
+attribute write — no rebuild, no duplicated stylesheet.
+
+| Token         | Paper (light)        | Charcoal (dark)        | Note                                  |
+|---------------|----------------------|------------------------|---------------------------------------|
+| `paper`       | `#F2EEE7`            | `#131110`              | Page ground                           |
+| `paper-2`     | `#FAF8F2`            | `#1D1A16`              | Cards, bento cells                    |
+| `plate`       | `#FAF8F2`            | `#221E19`              | Portrait plate ground                 |
+| `ink`         | `#1A1610`            | `#F0EBE1`              | Body text — flips with the ground     |
+| `ink-soft`    | `#6E675A`            | `#A39A8B`              | Secondary text                        |
+| `line`        | `rgba(26,22,16,.16)` | `rgba(240,235,225,.16)`| Hairlines                             |
+| `ink-surface` | `#1A1610`            | `#080807`              | The two dark chapters sink lower      |
+| `on-ink`      | `#1A1610`            | `#080807`              | Ink that sits *on* the ink surface    |
+| `vermilion`   | `#EF4B22`            | `#FF5C33`              | Brighter so it holds on charcoal      |
+| `highlight`   | `#FFC94A`            | `#FFD166`              | Marker sweeps                         |
+
+Rules: the ink chapters keep cream text in both themes (only the surface moves, so the
+magazine rhythm survives) · `ink-surface` is a dedicated token, never `ink`, because
+`ink` flips with the ground · grain switches from `multiply` to `overlay` and the
+cursor inks are re-declared per theme.
+
 
 ## 3. Typography
 
@@ -60,6 +86,12 @@ Scale (clamp, fluid):
 - Radii: mostly 0 (editorial sharp) · images: arch top (`border-radius: 999px 999px 0 0`)
   for the portrait, 4px elsewhere
 - Borders: 1px hairlines, never heavy shadows
+- Hero portrait: the plate is sized from the **viewport height**
+  (`clamp(210px, 31svh, 330px)`, width = height × 4/5) so the figure, its caption and
+  the scroll hint always land inside the first screen — a short laptop used to push the
+  portrait past the fold. Below `lg` it falls back to a width-driven 4:5 plate.
+  The portrait is a keyed cut-out (`public/portrait.png`) so the subject is printed on
+  the plate's own ground instead of sitting on a cold white studio background.
 
 ## 5. Signature Components
 1. **Grain overlay** — fixed SVG turbulence film, opacity .28, pointer-events none
@@ -74,6 +106,9 @@ Scale (clamp, fluid):
 8. **Index numbers** — `01/` mono prefixes on every chapter header
 9. **Highlight sweep** — vermilion/yellow marker underline drawn on scroll-in
 10. **Scroll progress hairline** — 2px vermilion rule at viewport top
+11. **Theme switch** — a hairline plate in the header (and in the mobile menu) that
+    cross-fades the whole surface between paper and charcoal; the icon shows the
+    theme you land on, `aria-pressed` reports the state, and the choice is stored
 
 ## 6. Motion Spec
 - Smooth scroll: Lenis, `lerp .09`, `duration 1.15`, disabled for `prefers-reduced-motion`

@@ -14,7 +14,32 @@
     <meta name="author" content="Muhammad Anas" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#f2eee7" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href="https://anastrix.live/" />
+
+    <!-- Theme — resolved before first paint so the page never flashes the
+         wrong palette. Mirrors src/lib/theme.js; keep both in sync. -->
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("anastrix-theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute("content", theme === "dark" ? "#131110" : "#f2eee7");
+          }
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
 
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />

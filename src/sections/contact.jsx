@@ -82,7 +82,7 @@ export const Contact = () => {
     <section
       id="contact"
       data-cursor-light
-      className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden"
+      className="relative bg-ink-surface text-cream py-24 sm:py-36 overflow-hidden"
     >
       <span
         aria-hidden="true"

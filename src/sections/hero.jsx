@@ -93,29 +93,42 @@ export const Hero = () => (
           </Reveal>
         </div>
 
-        {/* Portrait — arch frame, editorial caption */}
-        <div className="lg:col-span-5 lg:justify-self-end w-full max-w-[320px] sm:max-w-[360px] lg:mx-0 lg:w-[clamp(230px,28.5svh,340px)]">
+        {/* Portrait — arch plate, editorial caption.
+            The plate is sized from the viewport height (not the width) so the
+            figure, its caption and the scroll hint always land inside the
+            first screen — on a short laptop the portrait used to run past the
+            fold. The stamp now straddles the plate's shoulder instead of
+            landing on the subject. */}
+        <div className="lg:col-span-5 w-full max-w-[300px] sm:max-w-[320px] mx-auto lg:mx-0 lg:justify-self-end">
           <motion.figure
             initial={{ opacity: 0, y: 40, rotate: 1.5 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
             transition={{ duration: 1.1, delay: 0.35, ease: EASE }}
             className="relative"
           >
-            <div className="arch-frame border border-line bg-paper-2 aspect-[4/5]">
-              <img
-                src="/profile.png"
-                alt="Portrait of Muhammad Anas"
-                className="w-full h-full object-cover object-top"
-                width={1024}
-                height={1024}
-              />
+            <div className="portrait-plate arch-frame relative border border-line">
+              <picture className="absolute inset-0 block">
+                <source srcSet="/portrait.webp" type="image/webp" />
+                <img
+                  src="/portrait.png"
+                  alt="Portrait of Muhammad Anas"
+                  className="h-full w-full object-cover object-top"
+                  width={1024}
+                  height={1024}
+                  decoding="async"
+                />
+              </picture>
             </div>
             <figcaption className="mt-3 flex items-center justify-between gap-4 whitespace-nowrap meta-label text-[10px] text-ink-soft">
-              <span>FIG. 01 — the developer</span>
+              <span>FIG. 01</span>
               <span className="text-vermilion">est. 2006</span>
             </figcaption>
-            <span className="absolute -left-10 top-8 hidden lg:block">
-              <Seal size={86} text="· PRINTED IN KARACHI · SHIPPED WORLDWIDE " />
+            <span className="absolute -left-[26px] -top-[26px] hidden lg:block">
+              <Seal
+                size={72}
+                text="· PRINTED IN KARACHI · SHIPPED WORLDWIDE "
+                className="text-ink-soft"
+              />
             </span>
           </motion.figure>
         </div>
