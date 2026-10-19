@@ -72,7 +72,11 @@ const projects = [
 ];
 
 export const Projects = () => (
-  <section id="projects" className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden">
+  <section
+    id="projects"
+    data-cursor-light
+    className="relative bg-ink text-cream py-24 sm:py-36 overflow-hidden"
+  >
     {/* quiet ghost index */}
     <span
       aria-hidden="true"

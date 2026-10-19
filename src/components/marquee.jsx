@@ -25,6 +25,7 @@ export const Marquee = ({ items = [], dark = true, separator = "✳" }) => {
 
   return (
     <div
+      data-cursor-light={dark ? "" : undefined}
       className={`marquee-mask overflow-hidden border-y select-none ${
         dark ? "bg-ink text-cream border-ink" : "bg-paper text-ink border-line"
       }`}

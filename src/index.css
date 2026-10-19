@@ -62,13 +62,18 @@
     user-select: none;
   }
 
-  /* Native cursor hidden only for fine pointers while custom cursor runs */
+  /* Native cursor hidden on fine pointers while the custom one runs.
+     Text fields keep their I-beam — the custom cursor steps aside there. */
   @media (pointer: fine) {
     body.cursor-on,
-    body.cursor-on a,
-    body.cursor-on button,
-    body.cursor-on [role="button"] {
+    body.cursor-on * {
       cursor: none;
+    }
+    body.cursor-on input,
+    body.cursor-on textarea,
+    body.cursor-on select,
+    body.cursor-on [contenteditable="true"] {
+      cursor: text;
     }
   }
 }
