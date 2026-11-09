@@ -116,7 +116,6 @@ Scale (clamp, fluid):
 11. **Theme switch** — a hairline plate in the header (and in the mobile menu) that
     cross-fades the whole surface between paper and charcoal; the icon shows the
     theme you land on, `aria-pressed` reports the state, and the choice is stored
-
 ## 6. Motion Spec
 - Smooth scroll: Lenis, `lerp .09`, `duration 1.15`, disabled for `prefers-reduced-motion`
 - Reveals: `whileInView`, once, `y 28→0`, opacity, `.7s`, stagger .08–.12s

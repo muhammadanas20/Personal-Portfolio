@@ -1,10 +1,35 @@
-# Muhammad Anas — Portfolio (Atelier Edition)
+# Muhammad Anas — Portfolio
 
-A complete editorial redesign of my personal portfolio: warm paper, kinetic serif
-typography, risograph artwork and motion with intent. Design system & concept board:
-[`DESIGN.md`](DESIGN.md) · [`design/concept-board.jpg`](design/concept-board.jpg).
+One bundle, two editions:
 
-## Design language
+| Route | Edition | What it is |
+| --- | --- | --- |
+| `/` | **Scenes** | Nine numbered scenes on one dark technical surface — mono instrumentation, letterboxed media, PRJ_00X project list and a trio of AGENT cursors |
+| `/atelier` | **Atelier** | The editorial paper edition — warm cream, kinetic serif, risograph art, ink chapters |
+
+Both share the content in `src/scenes/data.js` / the section components, the Lenis smooth
+scroll and the self-hosted fonts. The Atelier design system is documented in
+[`DESIGN.md`](DESIGN.md).
+
+## Scenes edition (front door)
+
+- **Structure** — `SCENE 01 ORIGIN → 02 ABOUT → 03 SKILLS → 04 SELECTED WORKS → 05 INTENT →
+  06 TRACK RECORD → 07 OFF-SCREEN → 08 DEEP DIVE → 09 CONNECT`, each with a numbered header,
+  a live scene rail and a scroll read-out in the bottom HUD
+- **Chrome** — fixed mark + status + PKT clock, 12-column instrumentation grid, pointer
+  coordinates, scroll percentage and build stamp
+- **AGENT cursors** — three spring-damped pointers (`AGENT·01/02/03`) orbiting the exact
+  cursor dot; they collapse on click and step aside over text fields. Not mounted on touch
+  or reduced motion
+- **Type** — Space Grotesk for display (uppercase, tight), JetBrains Mono for every label
+- **Media** — letterboxed frames with corner ticks, a document gallery with lightbox, and a
+  typographic résumé cover instead of a rasterised PDF
+- **Interaction** — project rows reveal a floating artwork preview, marquee strips, scene
+  reveals that respect `prefers-reduced-motion`
+- **Design language** is a homage to scene-based technical portfolios; all copy, images and
+  identity are Anas's own — no third-party text, assets or code are reproduced
+
+## Atelier edition (`/atelier`) — design language
 - **Paper & ink** — warm cream `#F2EEE7` canvas with film grain; two dark "ink" chapters
   (Selected Work, Contact) for magazine-like pacing
 - **Type** — Fraunces Variable (display, wonky italics), Space Grotesk Variable (body),
@@ -33,13 +58,15 @@ typography, risograph artwork and motion with intent. Design system & concept bo
 ## Project structure
 ```
 src/
+├── scenes/         # Scenes edition — data, chrome, agent cursors, scene parts, css
 ├── components/     # cursor, marquee, magnetic, reveal/mask-lines, scramble,
 │                   # seal, section-heading, scroll-progress, theme-toggle
 ├── lay/            # navbar (full-screen ink mobile menu), footer
 ├── sections/       # hero, about, toolkit, projects, education, achievements, contact
 ├── lib/scroll.js   # Lenis smooth scroll + anchor travelling
 ├── lib/theme.jsx   # theme engine (provider, hook, storage, system preference)
-├── App.jsx         # composition
+├── App.jsx         # Atelier composition
+├── main.jsx        # route switch: / → Scenes, /atelier → Atelier
 └── index.css       # design tokens & editorial component styles (Tailwind v4)
 ```
 
@@ -57,6 +84,6 @@ npm run test:theme # headless check of the theme engine (jsdom)
 Contact form needs EmailJS keys in `.env`:
 `VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, `VITE_EMAILJS_PUBLIC_KEY`.
 
-## Removed in this redesign
+## Removed along the way
 Interactive spider, CRT/skeuomorphic console panels, preloader gate, click-sparks,
 terminal hero, Three.js scene — replaced by the editorial system above.
