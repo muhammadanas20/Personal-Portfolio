@@ -13,14 +13,22 @@
     />
     <meta name="author" content="Muhammad Anas" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#f2eee7" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="color-scheme" content="dark light" />
     <link rel="canonical" href="https://anastrix.live/" />
+    <link rel="preload" as="image" href="/portrait.webp" />
 
-    <!-- Theme — resolved before first paint so the page never flashes the
-         wrong palette. Mirrors src/lib/theme.js; keep both in sync. -->
+    <!-- Pre-paint mode resolution:
+         - / (Swarm Cinema) locks into #050505 + .js/.locked before first paint
+         - /atelier and /paper resolve the stored/system paper theme -->
     <script>
       (function () {
+        var isPaper = /^\/(atelier|paper)\/?$/.test(window.location.pathname);
+        if (!isPaper) {
+          document.documentElement.classList.add("zll-html", "js", "locked");
+          document.documentElement.style.colorScheme = "dark";
+          return;
+        }
         try {
           var stored = window.localStorage.getItem("anastrix-theme");
           var theme =
@@ -40,6 +48,18 @@
         }
       })();
     </script>
+    <style>
+      html.zll-html,
+      html.zll-html body {
+        margin: 0;
+        padding: 0;
+        background: #050505;
+        color: #f1efe9;
+      }
+      html.zll-html.locked {
+        overflow: hidden;
+      }
+    </style>
 
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />

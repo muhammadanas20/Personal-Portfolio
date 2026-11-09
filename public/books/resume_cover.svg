@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <polygon points="600,0 600,320 340,0" fill="#ff5e00" opacity="0.16"/>
+  <polygon points="0,800 380,800 0,470" fill="#ffffff" opacity="0.05"/>
+  <rect x="34" y="34" width="532" height="732" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5"/>
+  <text x="64" y="84" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#ff5e00" letter-spacing="3" font-weight="700">CURRICULUM VITAE · 2026</text>
+  <circle cx="300" cy="245" r="56" fill="none" stroke="#f1efe9" stroke-width="3.5"/>
+  <circle cx="300" cy="245" r="46" fill="none" stroke="#ff5e00" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="300" y="258" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="34" fill="#f1efe9" letter-spacing="3">MA</text>
+  <text x="300" y="420" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="52" fill="#f1efe9" letter-spacing="2">MUHAMMAD</text>
+  <text x="300" y="478" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="52" fill="#ff5e00" letter-spacing="2">ANAS</text>
+  <line x1="185" y1="514" x2="415" y2="514" stroke="#ffffff" stroke-opacity="0.32" stroke-width="1.5"/>
+  <text x="300" y="554" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="22" fill="#e2dfd7">Full-Stack &amp; AI Automation</text>
+  <text x="300" y="726" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#d4d1c9" letter-spacing="2">KARACHI, PAKISTAN · FAST NUCES</text>
+</svg>

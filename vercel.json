@@ -31,6 +31,10 @@
     {
       "source": "/atelier",
       "destination": "/index.html"
+    },
+    {
+      "source": "/paper",
+      "destination": "/index.html"
     }
   ]
 }
