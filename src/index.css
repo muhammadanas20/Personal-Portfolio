@@ -462,62 +462,6 @@
     border-color: var(--c-vermilion);
   }
 
-  /* Swarm cursor — a flock of collaborator pointers trailing the dot cursor.
-     Tones read from the theme custom properties, so the whole flock re-inks
-     itself on the same attribute write as the rest of the site. */
-  .swarm-cursor {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 86;
-    pointer-events: none;
-    will-change: transform, opacity;
-    --swarm-fill: var(--c-ink);
-    --swarm-edge: var(--c-paper);
-    --swarm-tag-bg: var(--c-paper);
-    --swarm-tag-fg: var(--c-ink);
-    --swarm-tag-line: var(--swarm-fill);
-  }
-  .swarm-cursor[data-tone="vermilion"] {
-    --swarm-fill: var(--c-vermilion);
-  }
-  .swarm-cursor[data-tone="soft"] {
-    --swarm-fill: var(--c-ink-soft);
-  }
-  /* On the dark chapters the flock flips to cream, exactly like the dot. */
-  .swarm-layer.is-light .swarm-cursor {
-    --swarm-fill: var(--c-cream);
-    --swarm-edge: var(--c-ink-surface);
-    --swarm-tag-bg: var(--c-ink-surface);
-    --swarm-tag-fg: var(--c-cream);
-  }
-  .swarm-layer.is-light .swarm-cursor[data-tone="vermilion"] {
-    --swarm-fill: var(--c-vermilion);
-  }
-  .swarm-cursor__arrow path {
-    fill: var(--swarm-fill);
-    stroke: var(--swarm-edge);
-    stroke-width: 1.2;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 1px 1.5px rgba(10, 8, 6, 0.18));
-  }
-  .swarm-cursor__tag {
-    position: absolute;
-    left: 14px;
-    top: 13px;
-    padding: 2px 4px 2px;
-    border: 1px solid var(--swarm-tag-line);
-    border-radius: 2px;
-    background-color: var(--swarm-tag-bg);
-    color: var(--swarm-tag-fg);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
 }
 
 /* ── Keyframes ──────────────────────────────────────────────── */

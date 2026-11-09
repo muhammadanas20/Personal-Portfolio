@@ -9,7 +9,6 @@ import { Achievements } from "@/sections/achievements";
 import { Contact } from "@/sections/contact";
 import { Marquee } from "@/components/marquee";
 import { Cursor } from "@/components/cursor";
-import { SwarmCursor } from "@/components/swarm-cursor";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { ThemeProvider } from "@/lib/theme-provider";
 
@@ -32,7 +31,6 @@ const App = () => (
 
       <ScrollProgress />
       <Cursor />
-      <SwarmCursor />
       <Navbar />
 
       <main id="main">

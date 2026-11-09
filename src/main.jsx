@@ -8,12 +8,15 @@ import "@fontsource-variable/jetbrains-mono";
 
 import "./index.css";
 import App from "./App.jsx";
+import ScenesApp from "./scenes/ScenesApp.jsx";
 import { initSmoothScroll } from "./lib/scroll";
 
 initSmoothScroll();
 
+// Two editions, one bundle: the Scene portfolio is the front door,
+// the Atelier editorial edition lives at /atelier.
+const isAtelier = /^\/atelier\/?$/.test(window.location.pathname);
+
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <React.StrictMode>{isAtelier ? <App /> : <ScenesApp />}</React.StrictMode>
 );
