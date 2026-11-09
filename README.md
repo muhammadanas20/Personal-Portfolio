@@ -11,7 +11,8 @@ typography, risograph artwork and motion with intent. Design system & concept bo
   JetBrains Mono Variable (meta labels), all self-hosted via Fontsource
 - **Accents** — vermilion `#EF4B22`, highlighter yellow `#FFC94A`
 - **Motion** — Lenis weighted smooth scroll, line-mask heading reveals, scramble-decode
-  roles, marquee ticker, rotating ink seals, magnetic buttons, dot cursor
+  roles, marquee ticker, rotating ink seals, magnetic buttons, dot cursor with a
+  trailing swarm of collaborator pointers
   (all disabled under `prefers-reduced-motion`)
 - **Artwork** — project covers are a bespoke risograph illustration series generated
   for this redesign (no stock, no placeholders)
@@ -33,7 +34,7 @@ typography, risograph artwork and motion with intent. Design system & concept bo
 ## Project structure
 ```
 src/
-├── components/     # cursor, marquee, magnetic, reveal/mask-lines, scramble,
+├── components/     # cursor, swarm-cursor, marquee, magnetic, reveal/mask-lines, scramble,
 │                   # seal, section-heading, scroll-progress, theme-toggle
 ├── lay/            # navbar (full-screen ink mobile menu), footer
 ├── sections/       # hero, about, toolkit, projects, education, achievements, contact

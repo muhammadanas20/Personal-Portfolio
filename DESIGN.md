@@ -116,6 +116,13 @@ Scale (clamp, fluid):
 11. **Theme switch** — a hairline plate in the header (and in the mobile menu) that
     cross-fades the whole surface between paper and charcoal; the icon shows the
     theme you land on, `aria-pressed` reports the state, and the choice is stored
+12. **Swarm cursor** — five spring-damped collaborator pointers fan out behind the dot
+    cursor: the two lead agents carry hairline mono name tags, the other three stay bare
+    arrows so the flock never reads as a stack of labels. The wedge stretches with pointer
+    speed, drifts on a slow wobble at rest, scatters on click, and flips to cream over the
+    dark chapters (same `data-cursor-light` markers as the dot). Steps aside for text
+    fields, unmounted on touch and reduced motion. The dot stays the precise pointer
+    (z-90); the flock floats at z-86.
 
 ## 6. Motion Spec
 - Smooth scroll: Lenis, `lerp .09`, `duration 1.15`, disabled for `prefers-reduced-motion`
