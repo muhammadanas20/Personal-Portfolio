@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <rect width="600" height="800" fill="#f7f5f0"/>
+  <rect x="28" y="28" width="544" height="744" fill="none" stroke="#dcd8ce" stroke-width="1.5"/>
+  <text x="58" y="74" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#6b6860" letter-spacing="1.5">SECTION 02 / ACADEMIC RECORD</text>
+  <text x="542" y="74" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#ff5e00" font-weight="700">P.02</text>
+  <line x1="58" y1="94" x2="542" y2="94" stroke="#1a1917" stroke-width="2"/>
+  <text x="58" y="148" font-family="Impact, Arial Black, sans-serif" font-size="30" fill="#111111" letter-spacing="1">EDUCATION &amp; HONORS</text>
+  
+  <text x="58" y="205" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13.5" fill="#2b2926">BS Computer Science — FAST NUCES Karachi</text>
+  <line x1="58" y1="223" x2="485" y2="223" stroke="#e3dfd6" stroke-width="6"/>
+  <text x="58" y="259" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13.5" fill="#2b2926">Dean&apos;s List of Honors — Fall 2025 Semester</text>
+  <line x1="58" y1="277" x2="430" y2="277" stroke="#e3dfd6" stroke-width="6"/>
+  <text x="58" y="313" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13.5" fill="#2b2926">ACM Coders Cup 2025 — Finalist (Furious 3)</text>
+  <line x1="58" y1="331" x2="375" y2="331" stroke="#e3dfd6" stroke-width="6"/>
+  <text x="58" y="367" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13.5" fill="#2b2926">Developers&apos; Day 2026 — Competitive Track</text>
+  <line x1="58" y1="385" x2="485" y2="385" stroke="#e3dfd6" stroke-width="6"/>
+  <rect x="58" y="606" width="484" height="98" fill="#efece4" stroke="#d5d0c4" stroke-width="1"/>
+  <line x1="80" y1="638" x2="360" y2="638" stroke="#ff5e00" stroke-width="4"/>
+  <line x1="80" y1="662" x2="480" y2="662" stroke="#9d998f" stroke-width="3"/>
+  <line x1="80" y1="684" x2="410" y2="684" stroke="#bdb9af" stroke-width="3"/>
+  <text x="300" y="748" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#7a776e" letter-spacing="2">MUHAMMAD ANAS — ARCHIVE 2026</text>
+</svg>
